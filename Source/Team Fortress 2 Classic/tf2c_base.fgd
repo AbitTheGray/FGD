@@ -1,0 +1,532 @@
+@include "base.fgd"
+
+//
+// Overrides for some base classes.
+//
+
+//
+// WORLDSPAWN
+//
+
+@SolidClass base(Targetname,worldbase,ResponseContext) = worldspawn : 
+	"This is the world entity. Each map can only contain one, and it's automatically created for you."
+[
+	skyname(string) : "SkyBox Texture Name" : "sky_tf2_04"
+	detailvbsp(string) : "Detail .vbsp file" : "detail_2fort.vbsp" : "Detail .vbsp file to use for emitting detail props (found in directory <root>/modname)"
+	detailmaterial(string) : "Detail material file" : "detail/detailsprites_2fort" : "Material for detail sprites to use for drawing detail props"
+]
+
+@BaseClass = DamageTypeABS
+[
+	damagetype(choices) : "Damage Type" : 0 : "Damage types can be combined to have more than one effect. Simply add the numeric values for the desired types together and use the resulting number. (16 [train] + 64 [blast] = 80: gibbing train death)" =
+	[
+		0 : "GENERIC"
+		//
+		16 : "Train"
+		65536 : "Sawblade"
+		1048576 : "Critical"
+		16777216 : "Ignite (no after-burn damage)"
+		32 : "FALL ('...fell to a clumsy painful death')"
+		//
+		1 : "CRUSH (red flash)"
+		2 : "BULLET (bullet impact sounds)"
+		4 : "SLASH (double blood)"
+		8 : "BURN (silent damage, does not ignite)"
+		//__16 : "Train"
+		//__32 : "FALL (...fell to a clumsy painful death)"
+		64 : "BLAST (gibs on death)"
+		128 : "CLUB (critical death scream, only)"
+		256 : "SHOCK (smoke and sparks)"
+		//512 : "SONIC"
+		//1024 : "ENERGYBEAM"
+		//2048 : ""
+		//4096 : ""
+		//8192 : ""
+		16384: "DROWN (blue flash and gurgles)"
+		//32768 : "PARALYSE"
+		//__65536 : "Sawblade"
+		//131072 : "POISON"
+		//262144 : "RADIATION (gibs on death)"
+		//524288 : "DROWNRECOVER"
+		//__1048576 : "Critical"
+		//2097152 : "SLOWBURN"
+		4194304 : "SLOWFREEZE (leaves a body-double)"
+		//8388608 : ""
+		//__16777216 : "Ignite (no after-burn damage)"
+		//33554432 : ""
+		//67108864 : ""
+		//134217728 : ""
+		//268435456 : ""
+		//536870912 : ""
+		//1073741824 : ""
+	]
+]
+
+@PointClass base(Targetname, Parentname, Angles) size(-2 -2 -2, 2 2 2) frustum(lightfov,nearz,farz,lightcolor,-1) = env_projectedtexture : 
+	"Projected texture entity."
+[
+	spawnflags(flags) =
+	[
+		1  : "Enabled"				: 1
+		2  : "Always Update (moving light)"	: 0
+	]
+
+	texturename(material)		: "Texture" : "effects/flashlight001" : "path/texture to be projected. Relative to main/materials/"
+	target(target_destination)	: "target" : : "target"	
+	lightfov(float)				: "FOV" : "90.0" : "FOV"
+	nearz(float)				: "NearZ" : "4.0" : "Near Z for projected texture"
+	farz(float)					: "FarZ" : "750.0" : "Far Z for projected texture"	
+	quadraticatten(float)		: "Quadratic attenuation" : "0.0" : "Quadratic attenuation"
+	linearatten(float)			: "Linear attenuation" : "100" : "Linear attenuation"
+	constantatten(float)		: "Constant attenuation" : "0.0" : "Constant attenuation"
+	shadowtatten(float)		: "Shadow attenuation" : "0.0" : "Shadow attenuation"
+	
+	enableshadows(Choices) : "Enable Shadows" : 0 : "Enables/disables shadows from this projected texture." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	shadowquality(Choices) : "Shadow Quality" : 1 : "Quality of shadows." =
+	[
+		0 : "Low"
+		1 : "High"
+	]
+	lightonlytarget(Choices) : "Light Only Target" : 0 : "Limit flashlight effect to only effect target entity." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	lightworld(Choices) : "Light World" : 1 : "Control whether flashlight effects static world geometry." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	lightcolor(color255)		: "Light Color" : "255 255 255 200" : "Light Color RGB-Intensity"
+	colortransitiontime(float)	: "Color Transition Time" : "0.5" : "Amount of time it takes for a color change to occur."
+	cameraspace(integer)		: "Camera Space" : 0 : "Angles are interpreted as being relative to camera."
+
+	// Inputs
+	input TurnOn(void)		: "Turn on the texture"
+	input TurnOff(void)		: "Turn off the texture"
+	input AlwaysUpdateOn(void)	: "Turn on per frame updating (for moving lights)"
+	input AlwaysUpdateOff(void)	: "Turn off per frame updating (for moving lights)"
+	input SetFOV(float)		: "Set FOV"
+	input SpotlightTexture(string)		: "Set the spotlight texture"
+	input EnableShadows(bool)		: "Set the if shadows are enabled"
+	input LightColor(color255)		: "Change the light color/brightness"
+	input SetNearZ(float) 	: "Sets the near Z distance."
+	input SetFarZ(float) 	: "Sets the far Z distance."
+]
+
+@PointClass base(Targetname) iconsprite("editor-abs/logic_branch_listener") = logic_branch_listener :
+	"Contains a list of logic_branch entities and fires outputs when the state of any of the logic_branches changes.\n\n"+
+	"This entity is used to fire an event when a set of conditions are all satisfied."
+[
+	Branch01(target_destination) : "Logic Branch 01" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch02(target_destination) : "Logic Branch 02" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch03(target_destination) : "Logic Branch 03" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch04(target_destination) : "Logic Branch 04" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch05(target_destination) : "Logic Branch 05" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch06(target_destination) : "Logic Branch 06" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch07(target_destination) : "Logic Branch 07" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch08(target_destination) : "Logic Branch 08" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch09(target_destination) : "Logic Branch 09" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch10(target_destination) : "Logic Branch 10" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch11(target_destination) : "Logic Branch 11" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch12(target_destination) : "Logic Branch 12" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch13(target_destination) : "Logic Branch 13" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch14(target_destination) : "Logic Branch 14" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch15(target_destination) : "Logic Branch 15" : : "The name of one or more logic_branches (wildcards allowed)."
+	Branch16(target_destination) : "Logic Branch 16" : : "The name of one or more logic_branches (wildcards allowed)."
+
+	input Test(void) : "Tests the state of all the logic_branches in the list and fires the appropriate output."
+
+	output OnAllTrue(void) : "Fired when all the logic_branches in the list become true."
+	output OnAllFalse(void) : "Fired when all the logic_branches in the list become false."
+	output OnMixed(void) : "Fired when one of the logic branches in the list changes, but some are true and some are false."
+]
+
+@PointClass base(Targetname) iconsprite("editor-abs/logic_measure_movement") = logic_measure_movement :
+	"An entity that can measure the movement of an entity relative to another entity " +
+	"and apply that movement to a third entity."
+[
+	MeasureTarget(target_destination) : "Entity to Measure" : "" : "Entity whose movement you want to measure."
+	MeasureReference(target_destination) : "Measure Reference" : "" : "The movement of Entity to Measure will be measured relative to this entity."
+	Target(target_destination) : "Entity to Move" : "" : "This entity will be moved to mimic the motions of Entity to Measure."
+	TargetReference(target_destination) : "Movement Reference" : "" : "The Entity to Move will move relative to this entity."
+	TargetScale(float) : "Movement scale" : "1" : "A scale to divide the measured movements by, before applying those movements to the Entity to Move. 1 = target entity moves as much as the measured entity, 2 = target entity moves half as far as the measured entity, and 0.5 = target entity moves twice as far as the measured entity."
+	MeasureType(choices) : "Measurement Type" : 0 =
+	[
+		0 : "Position"
+		1 : "Eye position"
+	]
+
+	input SetMeasureTarget(string) : "Set the Entity to Measure, whose movement should be measured."
+	input SetMeasureReference(string) : "Set the Measure Reference entity."
+	input Target(string) : "Set the Entity to Move, which will be moved to mimic the measured entity."
+	input SetTargetReference(string) : "Set the Movement Reference entity."
+	input SetTargetScale(float) : "Set the scale to divide the measured movements by."
+	input Enable(void) : "Enable the logic_measure_movement."
+	input Disable(void) : "Disable the logic_measure_movement."
+]
+
+@PointClass base(Targetname,EnableDisable) iconsprite("editor-abs/math_remap") = math_remap :
+	"An entity that remaps a range of input values to a given range of output values."
+[
+	spawnflags(flags) = 
+	[
+		1 : "Ignore out of range input values" : 1
+		2 : "Clamp output to output range" : 2
+	]
+
+	in1(integer) : "Minimum Valid Input Value" : 0 : "Input values below this value will be ignored."
+	in2(integer) : "Maximum Valid Input Value" : 1 : "Input values above this value will be ignored."
+	out1(integer) : "Output Value When Input Is Min." : : "When the input value is equal to 'Minimum Valid Input Value', this is the output value."
+	out2(integer) : "Output Value When Input Is Max." : : "When the input value is equal to 'Maximum Valid Input Value', this is the output value."
+
+	input InValue(float) : "Input value and fire the output with the remapped value."
+	output OutValue(float) : "Fired when the InValue input is received, with the remapped input value as the parameter."
+]
+
+@SolidClass base(Trigger,Targetname,DamageTypeABS) = trigger_hurt :
+	"A trigger volume that damages entities that touch it."
+[
+	master(string) : "Master (Obsolete)" : : "Legacy support: The name of a master entity. If the master hasn't been activated, this entity will not activate."
+	damage(integer) : "Damage" : 10 : "The amount of damage done to entities that touch this trigger. The damage is done every half-second. See also 'Damage Model' for extra details on how damage can be dealt."
+	damagecap(integer) : "Damage Cap" : 20 : "Maximum damage dealt per second. This field is only used if you select the Doubling w/Forgiveness damage model, via the spawnflag."
+	damagemodel(choices) : "Damage Model" : 0 : "How damage is dealt. Normal always does the specified amount of damage each half second. Doubling starts with the specified amount and doubles it each time it hurts the toucher. Forgiveness means that if the toucher gets out of the trigger the damage will reset to the specified value. Good for making triggers that are deadly over time without having to cause massive damage on each touch." =
+	[
+		0 : "Normal"
+		1 : "Doubling w/forgiveness"
+	]
+	
+	nodmgforce(choices) : "Zero Damage Force" : 0 : "Should the damaged entity receive no physics force from this trigger." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	input SetDamage(float) : "Set a new amount of damage for this trigger."
+	
+	output OnHurt(void) : "Fired whenever this trigger hurts something other than a player."
+	output OnHurtPlayer(void) : "Fired whenever this trigger hurts a player."
+]
+
+@PointClass base(Targetname, Parentname, Angles) cylinder(255 255 255, targetname, target, radius, targetname, targetname, radius)  cylinder(255 255 255, targetname, altpath, radius, targetname, targetname, radius) color(255 192 0) size(16 16 16) = path_track : 
+	"An entity used to build paths for other entities to follow. Each path_track is a node on the path, each holding the name of the next path_track in the path."
+[
+	spawnflags(Flags) =
+	[
+		1:  "Disabled" : 0
+		2:  "Fire once" : 0
+		4:  "Branch Reverse" : 0
+		8:  "Disable train" : 0
+		16: "Teleport to THIS path track" : 0
+		32: "Rollback zone on HUD (auto-roll if team_train_watcher handles movement)" : 0
+		64: "Rollforward zone on HUD (auto-roll if team_train_watcher handles movement)" : 0
+	]
+	
+	target(target_destination) : "Next Stop Target" : : "The next path_track in the path."
+	altpath(target_destination) : "Branch Path" : : "An alternative path_track to be the next node in the path. Useful for making branching paths. Use the ToggleAlternatePath / EnableAlternatePath inputs to make the alternative path active."
+	speed(float) : "New Train Speed" : 0 : "When the train reaches this path_track, it will set its speed to this speed. "+
+		"This speed must be a positive value that is less than the train's max speed. A value of 0 will cause no change in the train's speed."
+	radius(float) : "Path radius" : 0 : "Used by NPCs who follow track paths (attack chopper/gunship). This tells them the maximum distance they're allowed to be from the path at this node."
+
+	orientationtype(choices) : "Orientation Type" : 1 : "The way that the path follower faces as it moves through this path track." =
+	[
+		0 : "No change"
+		1 : "Face direction of motion"
+		2 : "Face this path_track's angles"
+	]
+
+	input ToggleAlternatePath(void) : "Cause the track to toggle to/from its alternate path."
+	input EnableAlternatePath(void) : "Enable the alternate path of the track."
+	input DisableAlternatePath(void) : "Disable the alternate path of the track."
+	input TogglePath(void) : "Cause the track to toggle on/off/"
+	input EnablePath(void) : "Enable the track."
+	input DisablePath(void) : "Disable the track."
+	output OnPass(void) : "Fired when any entity following this path passes this path_track node."
+	output OnTeleport(void)  : "Fired when any entity following this path teleports directly to this path_track node."
+]
+
+@PointClass base(Targetname) iconsprite("editor-abs/point_clientcommand") = point_clientcommand : 
+	"An entity that issues commands to the client console, as if it was typed in by the player (if activator is a player, or the local player in single player)."
+[
+	// Inputs
+	input Command(string) : "Command to execute."
+]
+
+@PointClass base(Targetname) iconsprite("editor-abs/point_servercommand") = point_servercommand : 
+	"An entity that issues commands to the server console."
+[
+	// Inputs
+	input Command(string) : "Command to execute."
+]
+
+@PointClass base(Targetname,DamageTypeABS) sphere(DamageRadius) = point_hurt :
+	"An entity that does damage to all entities in a radius around itself, with a specified delay." +
+	"If 'Target Entity' is specified, the damage is only done to that entity."
+[
+	DamageTarget(string) : "Target Entity" : "" : "If specified, only this entity will take damage. Otherwise, all entities within the Radius will take damage."
+	
+	DamageRadius(float) : "Radius" : 256 : "All entities within this radius of this entity will take damage. If a 'Target Entity' is specified, only that entity will take damage."
+	Damage(integer) : "Damage" : 5 : "Damage done to all affected entities each time this entity fires."
+	DamageDelay(float) : "Delay" : 1 : "Delay between refires, in seconds."
+
+	input Hurt(void) : "Force a single fire, damaging either the Target Entity or all entities within the radius."
+	input TurnOn(void) : "Enable this entity. It will start damaging entities everytime it fires, and refire based upon the specified Delay."
+	input TurnOff(void) : "Disable this entity. It will stop damaging entities."
+	input Toggle(void) : "Toggle this entity between On/Off state."
+]
+
+@PointClass base(Targetname,Parentname,EnableDisable,Angles) iconsprite("editor-abs/point_proximity_sensor") = point_proximity_sensor :
+	"An entity that detects another entity's proximity to a target position."
+[
+	target(target_destination) : "Target Entity Name" : : "Name of the entity whose angles will be sensed."
+
+	spawnflags(Flags) =
+	[
+		1 : "Test the distance as measured along the axis specified by our direction." : 0
+	]
+	
+	input Toggle(void) : "Toggle the sensor between enabled and disabled."
+	output Distance(float) : "Distance of the target entity away from this entity."
+]
+
+@PointClass base(Targetname,Angles,Parentname) sphere(radius) sphere(inner_radius) = point_push: "Point Push"
+[
+	spawnflags(Flags) = 
+	[
+		1 : "Test LOS before pushing" : 0
+		2 : "Use angles for push direction" : 0
+		4 : "No falloff (constant push at any distance)" : 0
+		8 : "Push players" : 1
+		16 : "Push physics" : 1
+	]
+	
+	enabled(choices) : "Start Enabled"	: 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	magnitude(float) : "Magnitude" : 100 : "How strongly to push away from the center."
+	radius(float) : "Radius" : 128 : "Radius to affect items in."
+	inner_radius(float) : "Inner radius" : "0" : "If not zero, the LOS is calculated from a point intersecting this sphere."
+	
+	input Enable(void) : "Enable the push."
+	input Disable(void): "Disable the push."
+]
+
+@PointClass base(Targetname) iconsprite("editor-abs/point_template") = point_template : 
+	"Turns an entity, or set of entities, into a single template that can be instanced anywhere, and multiple times. "+
+	"If there are interdependencies (entity I/O, hierarchy, or other name references) between the entities "+
+	"in the template, the entities in the template will have their names changed and the interdependencies will "+
+	"be reconnected to the changes names. The name change format is as follows: '<original name>&0000', where the 0000 "+
+	"will be replaced with the current global template instance, so wildcard searches for '<original name>*' will still find them.\n"+
+	"If you don't want the name fixup to happen, because you're only spawning the template once, or you want inputs to "+
+	"trigger all instances of the template, check the 'Preserve entity names' spawnflag. \n"+
+	"To spawn the template in other places, use an env_entity_maker."
+[
+	spawnflags(flags) =
+	[
+		1 : "Don't remove template entities" : 0
+		2 : "Preserve entity names (Don't do name fixup)" : 1
+	]
+
+	Template01(target_destination) : "Template 1"
+	Template02(target_destination) : "Template 2"
+	Template03(target_destination) : "Template 3"
+	Template04(target_destination) : "Template 4"
+	Template05(target_destination) : "Template 5"
+	Template06(target_destination) : "Template 6"
+	Template07(target_destination) : "Template 7"
+	Template08(target_destination) : "Template 8"
+	Template09(target_destination) : "Template 9"
+	Template10(target_destination) : "Template 10"
+	Template11(target_destination) : "Template 11"
+	Template12(target_destination) : "Template 12"
+	Template13(target_destination) : "Template 13"
+	Template14(target_destination) : "Template 14"
+	Template15(target_destination) : "Template 15"
+	Template16(target_destination) : "Template 16"
+
+	input ForceSpawn(void) : "Spawn an instance of the template at the original position."
+	output OnEntitySpawned(void) : "Fired after spawning an instance of this template."
+]
+
+@PointClass color(0 0 255) size(-1 -1 -64, 1 1 -8) sidelist(sides) iconsprite("editor/env_cubemap.vmt") = env_cubemap : 
+	"An entity that creates a sample point for the Cubic Environment Map."
+[
+	cubemapsize(choices) : "Cubemap Size" : 0 =
+	[
+		0 : "Default"
+		1 : "1x1"
+		2 : "2x2"
+		3 : "4x4"
+		4 : "8x8"
+		5 : "16x16"
+		6 : "32x32"
+		7 : "64x64"
+		8 : "128x128"
+		9 : "256x256"
+	]
+	sides(sidelist) : "Brush faces": : "(Optional) Brushes faces to directly attach to the env_cubemap. Press Pick then click on faces in the 3D View to select them. Use CTRL while clicking to add or remove from the selection."
+]
+
+@PointClass base(Targetname,Parentname,EnableDisable) sphere() iconsprite("editor/env_soundscape") line(255 255 255, targetname, position0) line(255 255 255, targetname, position1) line(255 255 255, targetname, position2) line(255 255 255, targetname, position3) line(255 255 255, targetname, position4) line(255 255 255, targetname, position5) line(255 255 255, targetname, position6) line(255 255 255, targetname, position7) = env_soundscape : 
+	"An entity to control sound in an area. The active soundscape at any time is the last one that had line-of-sight to the player, and was within the radius."
+[
+	radius(integer) : "Radius" : 128 : "If set to -1, then the player can hear the soundscape as long as he can see it (regardless of distance to it)."
+	soundscape(choices) : "Soundscape" : : "The name of the soundscape to use. Corresponds to an entry in the soundscapes*.txt file in the scripts directory." =
+	[
+		"tf2.general_ambient" : "tf2.general_ambient"
+		"tf2.respawn_room" : "tf2.respawn_room"
+		"2fort.Underground" : "2fort.Underground"
+		"2fort.Underground2" : "2fort.Underground2"
+		"2fort.OutdoorPond" : "2fort.OutdoorPond"
+		"2fort.OutdoorFort" : "2fort.OutdoorFort"
+		"2fort.Indoor" : "2fort.Indoor"
+		"Badlands.Inside" : "Badlands.Inside"
+		"Badlands.Outside" : "Badlands.Outside"
+		"Badlands.OutsideInterior" : "Badlands.OutsideInterior"
+		"barnblitz.inside" : "barnblitz.inside"
+		"barnblitz.outside" : "barnblitz.outside"
+		"CactusV.Inside" : "CactusV.Inside (Decoy)"
+		"CactusV.RespawnA" : "CactusV.RespawnA (Decoy)"
+		"CactusV.Outside" : "CactusV.Outside (Decoy)"
+		"Chariots.Inside" : "Chariots.Inside (Pipeline)"
+		"Chariots.Outside" : "Chariots.Outside (Pipeline)"
+		"Deathpit.Inside" : "Deathpit.Inside (Coaltown)"
+		"Deathpit.RespawnA" : "Deathpit.RespawnA (Coaltown)"
+		"Deathpit.Outside" : "Deathpit.Outside (Coaltown)"
+		"DoubleCross.Inside" : "DoubleCross.Inside"
+		"DoubleCross.Outside" : "DoubleCross.Outside"
+		"Dustbowl.Indoors" : "Dustbowl.Indoors"
+		"Dustbowl.Outdoors" : "Dustbowl.Outdoors"
+		"Egypt.Indoor" : "Egypt.Indoor"
+		"Egypt.Outdoor" : "Egypt.Outdoor"
+		"Goldrush.DeepInside" : "Goldrush.DeepInside"
+		"Goldrush.Outside" : "Goldrush.Outside"
+		"Goldrush.Inside" : "Goldrush.Inside"
+		"Gorge.Inside" : "Gorge.Inside"
+		"Gorge.Outside" : "Gorge.Outside"
+		"Granary.Outside" : "Granary.Outside"
+		"GravelPit.Outside" : "GravelPit.Outside"
+		"Halloween.Inside" : "Halloween.Inside"
+		"Halloween.Outside" : "Halloween.Outside"
+		"Halloween.Underworld" : "Halloween.Underworld"
+		"Halloween.hell" : "Halloween.hell"
+		"harbor.inside_blue_spawn_01" : "harbor.inside_blue_spawn_01 (Foundry)"
+		"harbor.inside_blue_hq" : "harbor.inside_blue_hq (Foundry)"
+		"harbor.indoor_blue_fuel" : "harbor.indoor_blue_fuel (Foundry)"
+		"harbor.outdoor_blue" : "harbor.outdoor_blue (Foundry)"
+		"harbor.inside_red_spawn_01" : "harbor.inside_red_spawn_01 (Foundry)"
+		"harbor.inside_red_hq" : "harbor.inside_red_hq (Foundry)"
+		"harbor.indoor_red_fuel" : "harbor.indoor_red_fuel (Foundry)"
+		"harbor.outdoor_red" : "harbor.outdoor_red (Foundry)"
+		"harbor.outdoor_central" : "harbor.outdoor_central (Foundry)"
+		"HighTower.Inside" : "HighTower.Inside"
+		"HighTower.Outside" : "HighTower.Outside"
+		"Hydro.Outside" : "Hydro.Outside"
+		"Lakeside.Cave" : "Lakeside.Cave"
+		"Lakeside.Inside" : "Lakeside.Inside"
+		"Lakeside.Lake" : "Lakeside.Lake"
+		"Lakeside.Outside" : "Lakeside.Outside"
+		"Lakeside.Temple" : "Lakeside.Temple"
+		"Lakeside.Wood" : "Lakeside.Wood"
+		"Lumberyard.Inside" : "Lumberyard.Inside"
+		"Lumberyard.Outside" : "Lumberyard.Outside"
+		"Mannworks.InsideCellars" : "Mannworks.InsideCellars"
+		"Mannworks.InsideWood" : "Mannworks.InsideWood"
+		"Mannworks.Outside" : "Mannworks.Outside"
+		"Mannworks.Respawn" : "Mannworks.Respawn"
+		"Medieval.Inside" : "Medieval.Inside"
+		"Medieval.Outside" : "Medieval.Outside"
+		"mountainlab.Bluspawn" : "mountainlab.Bluspawn"
+		"mountainlab.Cpoint" : "mountainlab.Cpoint"
+		"mountainlab.Inside" : "mountainlab.Inside"
+		"mountainlab.Outside1" : "mountainlab.Outside1"
+		"Nightfall.Cavern" : "Nightfall.Cavern"
+		"Nightfall.Indoors" : "Nightfall.Indoors"
+		"Nightfall.Outdoors" : "Nightfall.Outdoors"
+		"Nucleus.Inside" : "Nucleus.Inside"
+		"Nucleus.Outside" : "Nucleus.Outside"
+		"Ravine.Inside" : "Ravine.Inside"
+		"Ravine.Outside" : "Ravine.Outside"
+		"Rottenburg.Alcove" : "Rottenburg.Alcove"
+		"Rottenburg.Clearing" : "Rottenburg.Clearing"
+		"Rottenburg.Spawn" : "Rottenburg.Spawn"
+		"Rottenburg.Town" : "Rottenburg.Town"
+		"Sawmill.Inside" : "Sawmill.Inside"
+		"Sawmill.InsideNoLights" : "Sawmill.InsideNoLights"
+		"Sawmill.InsideWaterfall" : "Sawmill.InsideWaterfall"
+		"Sawmill.Outside" : "Sawmill.Outside"
+		"soho_generic" : "soho_generic (Kong King)"
+		"soho_indoor" : "soho_indoor (Kong King)"
+		"soho_square" : "soho_square (Kong King)"
+		"underground_soho" : "underground_soho (Kong King)"
+		"stormfront.Underground" : "stormfront.Underground (Coldfront)"
+		"stormfront.Outside" : "stormfront.Outside (Coldfront)"
+		"ThunderMountain.Inside" : "ThunderMountain.Inside"
+		"ThunderMountain.Outside" : "ThunderMountain.Outside"
+		"Upward.Inside" : "Upward.Inside"
+		"Upward.Outside" : "Upward.Outside"
+		"Viaduct.Inside" : "Viaduct.Inside"
+		"Viaduct.Outside" : "Viaduct.Outside"
+		"warehouse.inside_boilers" : "warehouse.inside_boilers (Mannhattan)"
+		"warehouse.inside_mainhall" : "warehouse.inside_mainhall (Mannhattan)"
+		"warehouse.inside_spawn_foyer" : "warehouse.inside_spawn_foyer (Mannhattan)"
+		"warehouse.inside_spawn_int" : "warehouse.inside_spawn_int (Mannhattan)"
+		"warehouse.outside" : "warehouse.outside"
+		"Well.DeepInside" : "Well.DeepInside"
+		"Well.Inside" : "Well.Inside"
+		"Well.Outside" : "Well.Outside"
+	]
+	position0(target_destination) : "Sound Position 0" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position1(target_destination) : "Sound Position 1" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position2(target_destination) : "Sound Position 2" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position3(target_destination) : "Sound Position 3" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position4(target_destination) : "Sound Position 4" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position5(target_destination) : "Sound Position 5" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position6(target_destination) : "Sound Position 6" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+	position7(target_destination) : "Sound Position 7" : "" : "A sound position that will be referenced inside the soundscape text file. Usually used to position a set of sounds within the world."
+
+	// Inputs
+	input Enable(void) : "Enable the soundscape."
+	input Disabled(void) : "Disable the soundscape."
+	input ToggleEnabled(void) : "Toggle the soundscape enabled state."
+
+	// Outputs
+	output OnPlay(void) : "Fired when this soundscape becomes the active one."
+]
+
+@PointClass base(Targetname, Angles) iconsprite("editor-abs/env_sun") color(255 0 0) = env_sun : 
+	"An entity to control & draw a sun effect in the sky."
+[
+	target(target_destination) : "Viewer entity" : : "Name of an entity used to determine where the sun is in the skybox. The sun should be lined up on a line from this entity to the env_sun entity."
+	
+	use_angles(choices) : "UseAngles" : 0 : "The old way to orient env_sun is to point it at a target. The new way is to specify the angles. If you use the new way, set this property to YES." = 
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	pitch(integer) : "Pitch" : 0
+
+	rendercolor(color255) : "Sun Color (R G B)" : "100 80 80"
+	overlaycolor(color255) : "Overlay Color (R G B)" : "0 0 0" : "A value of 0 0 0 will act the old way."
+	
+	size(integer) : "Size" : 16
+	overlaysize(integer) : "Overlay Size" : -1 : "A value of -1 means the overlay will act the old way."
+	
+	material(sprite) : "Material Name" : "sprites/light_glow02_add_noz" : "Material of the inner glow."
+	overlaymaterial(sprite) : "Overlay Material Name" : "sprites/light_glow02_add_noz" : "Material of the overlay glow."
+
+	HDRColorScale(float) : "HDR color scale." : "1.0" : "float value to multiply sprite color by when running in HDR mode."
+
+	// Inputs
+	input TurnOn(void) : "Enable sun rendering."
+	input TurnOff(void) : "Disable sun rendering."
+	input SetColor(color255) : "Change the sun's color. Format: <Red 0-255> <Green 0-255> <Blue 0-255>"
+]

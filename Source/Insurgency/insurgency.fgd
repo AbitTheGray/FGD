@@ -1,0 +1,651 @@
+@include "base.fgd"
+
+//
+// Insurgency game definition file (.fgd) 
+//
+
+@MaterialExclusion
+[
+	//exclude these from being loaded into hammer's preview
+	"console"
+	"correction"
+	"debug"
+	"hud"
+	"models"
+	"particle"
+	"particles"
+	"vgui"
+	"voice"
+	"cable"
+]
+
+@AutoVisGroup = "Tool Brushes"
+[
+	"Vis Clusters"
+	[	
+		"func_viscluster"
+	]
+	
+	"Detail Blockers"
+	[
+		"func_detail_blocker"
+	]
+]
+
+
+@AutoVisGroup = "Entities"
+[
+	"Lights"
+	[
+		"light"
+		"light_spot"
+		"light_directional"
+		"light_environment"
+		"point_spotlight"
+	]
+
+	"Sprites"
+	[
+		"env_lightglow"
+		"env_sprite_oriented"
+		"env_sprite"
+	]
+]
+
+@AutoVisGroup = "Soundscapes"
+[
+	"Env_soundscape"
+	[
+		"env_soundscape"
+		"env_soundscape_triggerable"
+		"env_soundscape_proxy"
+	]
+	
+	"Trigger_soundscape"
+	[
+		"trigger_soundscape"
+	]
+	
+	"Ambient_generic"
+	[
+		"ambient_generic"
+	]
+]
+
+@AutoVisGroup = "Overlays"
+[
+	"Info_overlay"
+	[
+		"info_overlay"
+	]
+	
+	"Info_decal"
+	[
+		"infodecal"
+	]
+]
+
+@AutoVisGroup = "Cubemaps"
+[
+	"Cubemap Probes"
+	[
+		"env_cubemap"
+	]
+]
+
+@AutoVisGroup = "Map Instances"
+[
+	"Instances"
+	[
+		"func_instance"
+	]
+	
+	"Instance Modifiers"
+	[
+		"func_instance_io_proxy"
+		"func_instance_parms"
+		"func_instance_origin"
+	]
+]
+
+@AutoVisGroup = "Insurgency"
+[
+	"Viewpoints"
+	[
+		"ins_viewpoint"
+	]
+
+	"Spawn Points"
+	[
+		"ins_spawnpoint"
+		"ins_spawnzone"
+		"ins_blockzone"
+	]
+		
+	"Objective Entities"
+	[
+		"trigger_capture_zone"
+		"point_controlpoint"
+		"point_flag"
+	]
+
+	"Objective Logic"
+	[
+		"ins_rulesproxy"
+		"logic_push"
+		"logic_skirmish"
+		"logic_vip"
+		"logic_firefight"
+		"logic_battle"
+		"logic_elimination"
+		"logic_hunt"
+		"logic_checkpoint"
+		"logic_outpost"
+		"logic_training"
+	]
+]
+
+//====================================================================================================================
+// BASE CLASSES
+//====================================================================================================================
+@BaseClass = TeamNum
+[
+	TeamNum(choices) : "Team Number (int)" : 2 =
+	[
+		0 : "None"
+		2 : "Security"
+		3 : "Insurgents"
+	]
+]
+
+@FilterClass base(BaseFilter) size(-8 -8 -8, 8 8 8) = filter_activator_team :
+	"A filter that filters by the team of the activator."
+[
+	filterteam(choices) : "Filter Team Number" : 2 : "The team number to filter by.  If the filter mode is Allow, only entities whose "+
+		"team number matches the given team will pass the filter. If the filter mode is Disallow, "+
+		"all entities EXCEPT those whose team number matches the given team will pass the filter." =
+	[
+		2 : "Security"
+		3 : "Insurgents"
+	]
+]
+
+@BaseClass = LogicGameType
+[
+	output OnSelected(void) : "Fired this gamemode is selected."
+	output OnSecurityWin(void) : "Fired when Security team win a round."
+	output OnInsurgentWin(void) : "Fired when Insurgent team win a round."
+	output OnGameDraw(void) : "Fired when round results in a draw."
+	output OnGameResult(void) : "Fired when a team has won a round."
+	output OnGameOver(void) : "Game is over, show scoreboard."
+	output OnPreRoundReset(void) : "Just before round is reset."
+	output OnRoundReset(void) : "Round has reset and players have respawned."
+	output OnRoundStarted(void) : "Round has started and players can move."
+	
+	input  ExtendRound(float) : "Extend the round timer by the given number of seconds"
+	input  SetRoundTimer(float) : "Set the round timer (given in seconds)"
+	input  EndRound(integer) : "End the round with a given winner (0 = draw, 2 = security, 3 = insurgents)"
+	input  AwardTeamSupply(integer) : "Award given team with a supply point (2 = security, 3 = insurgents)"
+]
+
+@BaseClass = BaseObject
+[
+	SolidToPlayers(choices) : "Solid To Player" : 0 : "Is object solid to players?" =
+	[
+		0 : "Use Default"
+		1 : "Yes"
+		2 : "No"
+	]
+	
+	output OnDestroyed(void) : "Object has been destroyed."
+	output OnDamaged(void) : "Object has taken damage."
+	output OnBecomingDisabled(void) : "Object's function has been disabled."
+	output OnBecomingReenabled(void) : "Object's function has been reinstated."
+	output OnObjectHealthChanged(void) : "Object's health has changed."
+	
+	input Show(void) : "Show this object"
+	input Hide(void) : "Hide this object"
+]
+
+@BaseClass = BaseGrenade
+[
+	input  Explode(float) : "Explode after x seconds"
+	input  MakeDud(void) : "Disable a grenade and remove it"
+	input  SetPlayerOwner(void) : "Sets activator to the player owner."
+]
+
+//====================================================================================================================
+// CORE ENTITIES
+//====================================================================================================================
+@SolidClass base(Targetname, Parentname, Origin, RenderFields,DamageFilter) = func_button_timed: 
+	"An entity that takes time to use."
+[
+	use_time(integer) : "Use Time" : 5 : ""
+	use_string(string) : "Use String" : "Using...." : ""
+	use_sub_string(string) : "Use Sub-String" : "" : ""
+	glow(target_destination) : "Glow Entity" : : "The name of an entity that will get the +use glow for this button."
+	
+	auto_disable(choices) : "Auto-Disable On Time Up" : 1 : "When the use timer is up, disable the button. (Can be enabled with an input)" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	spawnflags(flags) =
+	[
+		2048: "Starts locked" : 0
+	]
+	
+	locked_sound(choices) : "Locked Sound" : 0 : "Sound played when the player tries to use the button, and fails because it's locked." = 
+	[
+		0: "None"
+		2: "Access Denied"
+		8: "Small zap"
+		10: "Buzz"
+		11: "Buzz Off"
+		12: "Latch Locked"
+	]
+
+	// Inputs
+	input Lock(void) : "Lock the button, preventing it from functioning and playing a locked sound."
+	input Unlock(void) : "Unlock the button, allowing it to function."
+	input Enable(void) : "Enable the button, so it glows and can be used."
+	input Disable(void) : "Disable the button, so it can't be used and doesn't glow."
+
+	// Outputs
+	output OnPressed(void) : "Fired when the button is pressed."
+	output OnUnPressed(void) : "Fired when the button is unpressed."
+	output OnTimeUp(void) : "Fired when the button has been held more than the required amount of time."
+	output OnUseLocked(void) : "Fired when the button is used while locked."
+]
+
+@PointClass base(Angles) iconsprite("editor/env_detail_controller.vmt") = env_detail_controller : "An entity that lets you control the fade distances for detail props."
+[
+	fademindist(float) : "Start Fade Dist/Pixels" : 400 : "Distance at which the prop starts to fade."
+	fademaxdist(float) : "End Fade Dist/Pixels" : 1200 : "Maximum distance at which the prop is visible."
+]
+
+@SolidClass base(Trigger,TeamNum) = ins_blockzone : "Block Zone"
+[
+   spawnflags(flags) =
+   [
+		2: "Ignore player +USE" : 1
+   ]
+   
+   rendercolor(color255) : "FX Color (R G B)" : "255 255 255" : "The FX color is used by the selected Render Mode."
+   renderamt(integer) : "Renderamt" : 255 : "Integer-Value from 0 to 255 allowed"
+   rendermode(integer) : "Rendermode" : 0
+   renderfx(integer) : "Render-Effect" : 0
+]
+
+@SolidClass base(Trigger,TeamNum) = ins_spawnzone : "Spawn Zone"
+[
+   spawnflags(flags) =
+   [
+	  1: "Disable inventory" : 0
+      2: "Ignore player +USE" : 1
+   ]
+   
+   rendercolor(color255) : "FX Color (R G B)" : "255 255 255" : "The FX color is used by the selected Render Mode."
+   renderamt(integer) : "Renderamt" : 255 : "Integer-Value from 0 to 255 allowed"
+   rendermode(integer) : "Rendermode" : 0
+   renderfx(integer) : "Render-Effect" : 0
+   blockzone(target_destination) : "Block Zone" : "" : "If set, enables/disables given block zone(s) along with this spawn zone"
+   SquadID(integer) : "Associated Squad" : -1 : "If >=0, spawn points in this zone will be associated with the given squad"
+]
+
+@SolidClass base(Targetname, Parentname, TeamNum, EnableDisable) = func_teamblocker : 
+	"Walls that players of a certain team are unable to pass through" 
+[	
+	spawnflags(flags) =
+	[
+		2: "Don't show hint when touched" : 0
+	]
+]
+
+//====================================================================================================================
+// GAMERULES ENTITIES
+//====================================================================================================================
+@PointClass base(Targetname) = ins_rulesproxy : "Proxy entity for INS Gamerules"
+[	
+	output OnGamemodeStarted(string) : "Fired when a gamemode is selected."
+	output OnGamemodeReset(string) : "Fired at each round reset, giving the gamemode."
+	
+	output OnSecurityWin(void) : "Fired when Security team win a round."
+	output OnInsurgentWin(void) : "Fired when Insurgent team win a round."
+	output OnGameDraw(void) : "Fired when round results in a draw."
+	output OnGameResult(integer) : "Fired when a team has won a round."
+	output OnGameOver(integer) : "Game is over, show scoreboard."
+	output OnPreRoundReset(void) : "Just before round is reset."
+	output OnRoundReset(string) : "Round has reset and players have respawned."
+	output OnRoundStarted(void) : "Round has started and players can move."
+	output OnWaveDeployedTeamOne(void) : "Reinforcement wave deployed for Team One"
+	output OnWaveDeployedTeamTwo(void) : "Reinforcement wave deployed for Team Two"
+	output OnRapidDeploymentTeamOne(void) : "When an objective capture has redeployed team one"
+	output OnRapidDeploymentTeamTwo(void) : "When an objective capture has redeployed team two"
+	
+	input  ExtendRound(float) : "Extend the round timer by the given number of seconds"
+	input  SetRoundTimer(float) : "Set the round timer (given in seconds)"
+	input  EndRound(integer) : "End the round with a given winner (0 = draw, 2 = security, 3 = insurgents)"
+	input  AwardTeamSupply(integer) : "Award given team with a supply point (2 = security, 3 = insurgents)"
+]
+
+@SolidClass base(Trigger) = trigger_capture_zone : "Allows players capture its associated point."
+[
+	controlpoint(target_destination) : "Associated Control Point" : : "The control point associated with this Capture Zone."
+]
+
+@PointClass base( Global, Targetname ) iconsprite("editor/team_cp.vmt") = point_controlpoint : "Main capture point for Occupy"
+[
+	default_owner(choices) : "Default Owner (int)" : 0 =
+	[
+		0 : "Unassigned"
+		2 : "Security"
+		3 : "Insurgents"
+	]
+
+	printname(string) : "Print Name" : "" : "Descriptive name for this control point"
+
+	output OnCaptured(void) : ""
+	output OnCapturedBySecurity(void) : ""
+	output OnCapturedByInsurgent(void) : ""
+	output OnReset(void) : ""
+]
+
+@PointClass base(Targetname, Parentname, Global, TeamNum, Studiomodel, Angles) studioprop() = point_flag : "flag entity."
+[
+	output OnPickedUp(void) : ""
+	output OnDropped(void) : ""
+	output OnReset(void) : ""
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_battle.vmt") = logic_skirmish : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_battle.vmt") = logic_battle : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_elimination.vmt") = logic_elimination : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_elimination.vmt") = logic_firefight : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_elimination.vmt") = logic_vip : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_training.vmt") = logic_push : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_training.vmt") = logic_hunt : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_training.vmt") = logic_checkpoint : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_training.vmt") = logic_outpost : ""
+[
+]
+
+@PointClass base( Global, Targetname, LogicGameType ) iconsprite("editor/logic_training.vmt") = logic_training : ""
+[
+	input ProvideTokens(integer) : ""
+	input PlayOnline(void) : "Returns the player to the main menu"
+	input PracticeOffline(void) : "Loads pvp and sets a new mapcycle"
+	
+]
+
+//====================================================================================================================
+// OBJECTS
+//====================================================================================================================
+@PointClass base( Global, Targetname, TeamNum, BaseObject ) studio( "models/static_props/wcache_ins_01.mdl" ) = obj_weapon_cache : "Weapon cache that can be placed in the world to give dynamic buy zones."
+[
+	InitialHealth(integer) : "Initial Health" : 220
+	
+	TakeDamageBullets(choices) : "Take Bullet Damage" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+@PointClass base( Global, Targetname, TeamNum, BaseObject ) studio( "models/static_props/ins_radio.mdl" ) = obj_destructible : "Destructible objects that can either be neutral or an objective"
+[
+	InitialHealth(integer) : "Initial Health" : 220
+	
+	TakeDamageBullets(choices) : "Take Bullet Damage" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	TakeDamageMelee(choices) : "Take Melee Damage" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	CustomTrigger(target_destination) : "Associated Trigger"
+	ControlPoint(target_destination) : "Associated Control Point"
+	
+	CustomModelPathHealthy(studio) : "Model (healthy)" : "models/static_props/ins_radio.mdl"
+	CustomModelPathDestroyed(studio) : "Model (destroyed)" : "models/static_props/ins_radio_burned.mdl"
+]
+
+@PointClass base( Global, Targetname, TeamNum, BaseObject ) studio( "models/vehicles/minibus.mdl" ) = obj_destructible_vehicle : "Destructible vehicles that can either be neutral or an objective"
+[
+	VehicleType(choices) : "Vehicle Type" : 0 =
+	[
+		0 : "Minibus"
+		1 : "Lada"
+		2 : "Mercedes"
+		3 : "Humvee"
+		4 : "Passat"
+		5 : "Amtrac"
+	]
+	
+	InitialHealth(integer) : "Initial Health" : 220
+	
+	TakeDamageBullets(choices) : "Take Bullet Damage" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+
+//====================================================================================================================
+// OTHER
+//====================================================================================================================
+@SolidClass base(Trigger) = trigger_auto_crouch : "Allows players touching the trigger to auto-crouch."
+[
+]
+
+@SolidClass base(Trigger) = trigger_grenade_extinguisher : "Puts out AOE grenades (like Molotovs) that touch it"
+[
+	ExtinguishDelayMin(float) : "Extinguish Delay (min)" : 1
+	ExtinguishDelayMax(float) : "Extinguish Delay (max)" : 2
+]
+
+@PointClass base(Angles, Studiomodel, Shadow) Studioprop() = prop_foliage : "Foliage which is non-solid but blocks AI LoS"
+[
+	fademindist(float) : "Start Fade Dist/Pixels" : -1 : "Distance at which the prop starts to fade (<0 = use fademaxdist). If 'Screen Space Fade' is selected, this represents the number of pixels wide covered by the prop when it starts to fade."
+	fademaxdist(float) : "End Fade Dist/Pixels" : 0 : "Maximum distance at which the prop is visible (0 = don't fade out). If 'Screen Space Fade' is selected, this represents the *minimum* number of pixels wide covered by the prop when it fades."
+	fadescale(float) : "Fade Scale" : 1 : "If you specify a fade in the worldspawn, or if the engine is running under dx7 [hl2/ep1/portal] or dx8 [ep2/tf], then the engine will forcibly fade out props even if fademindist/fademaxdist isn't specified." +
+	" This scale factor gives you some control over the fade. Using 0 here turns off the forcible fades." +
+	" Numbers smaller than 1 cause the prop to fade out at further distances," +
+	"and greater than 1 cause it to fade out at closer distances."
+]
+
+@PointClass base(Targetname, Parentname) iconsprite("editor/env_explosion.vmt") = env_explosion_ins : 
+	"An entity that creates an explosion at its origin." 
+[
+	
+	szExplosiveName(choices) : "Explosion Type" : "grenade_c4" = 
+	[
+		"grenade_c4" : "C4"
+		"grenade_ied" : "IED"
+		"rocket_at4": "AT4"
+		"rocket_rpg7": "RPG7"
+		"grenade_m203_he" : "M203 HE"
+		"grenade_gp25_he" : "GP25 HE"
+		"grenade_m203_smoke" : "M203 Smoke"
+		"grenade_gp25_smoke" : "GP25 Smoke"
+		"grenade_flare" : "Flare"
+		"grenade_molotov" : "Molotov"
+		"grenade_anm14" : "ANM14"
+		"grenade_f1" : "F1"
+		"grenade_m67" : "M67"
+		"grenade_m84" : "M84"
+		"grenade_m18" : "M18"
+		"vehicle" : "Vehicle Explosion"
+	]
+	
+	UseFuseTime(boolean) : "Use Fuse Time" : 0
+	UseLaunchSound(boolean) : "Use Launch Sound" : 0
+
+	// Inputs
+	input Explode(void) : "Trigger the explosion."
+]
+
+@PointClass base(Targetname, Origin, Angles, Studiomodel) Studioprop() = prop_explosive : 
+	"An explosive entity that creates an explosion when destroyed and switches the prop's skin to a damaged state." 
+[
+	model(studio) report : "Explosive Model" : "models/static_props/wcache_box_02.mdl"
+	ExplosiveSound(sound) : "Explosive Sound" : "World.Generic.AmmoBoxCookOff"
+	ExplosiveParticle(particlesystem) : "Explosive Particle" : "ins_ammo_explosion"
+	
+	CanBeDamaged(boolean) : "Can Be Damaged" : 1
+	InitialHealth(integer) : "Initial Health" : 5
+	DamagedSkin(integer) : "Damaged Skin" : 2
+	
+	ShouldDoAreaDamage(boolean) : "Should Do Area Damage" : 1
+	AreaDamageRange(integer) : "Area Damage Range" : 64
+	AreaDamageTime(float) : "Area Damage Time" : "5.0"
+	AreaDamageFrequency(float) : "Area Damage Frequency" : "1.0"
+	AreaDamageAmount(float) : "Area Damage Amount" : "5.0"
+	AreaDamagePhysicsForce(float) : "Area Damage Physics Force" : "20.0" : "Force of random forces applied to this object"
+
+	// Inputs
+	input Explode(void) : "Trigger the explosion."
+]
+
+@PointClass base(Targetname, Parentname) studio( "models/static_props/FireSprinklerHead_break.mdl" )  = prop_sprinkler : 
+	"It's a sprinkler, honest." 
+[
+	// Inputs
+	input Start(void) : ""
+	input Stop(void) : ""
+	
+	// Outputs
+	output OnStart(string) : ""
+	output OnStop(string) : ""
+	output OnBreak(string) : ""
+]
+
+@PointClass base(prop_physics) studio( "models/static_props/prop_halloween_pumpkin_glowing.mdl" )  = prop_pumpkin : 
+	"For those days when you really need a pumpkin." 
+[
+	randomizeAppearance(choices) : "Randomize Appearance" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+@PointClass base(Targetname) = logic_training_timer : "For internal use."
+[
+	// Inputs
+	input Start(void) : ""
+	input Finish(void) : ""
+]
+
+//====================================================================================================================
+// MISC TRIGGERS
+//====================================================================================================================
+@SolidClass base(Trigger, TeamNum) = func_buyzone : "Allows players within this trigger to buy weapons and upgrades."
+[
+]
+
+@SolidClass base(Trigger, TeamNum) = func_weapon_lower : "Lowers the weapon of a player who enters the area."
+[
+]
+
+//====================================================================================================================
+// LADDER + ELEVATOR
+//====================================================================================================================
+@SolidClass = func_ladder : 
+	"Ladder. Players will be able to freely along one side of this brush, as if it was a ladder. " +
+	"If you are using a model prop for the visual representation of the ladder in the map, " +
+	"apply the toolsinvisibleladder material to the climbable side of the func_ladder brush."
+[
+]
+
+@SolidClass base(Targetname, Parentname, Origin, RenderFields) = func_elevator :
+	"A brush entity that moves vertically."
+[
+	top(vecline) : "Top floor position"
+	bottom(vecline) : "Bottom floor position"
+
+	speed(integer) : "Speed" : 100 : "The speed that the elevator moves, in inches per second."
+	acceleration(integer) : "Acceleration" : 100 : "The acceleration at which the elevator approaches its target speed, in inches per second per second."
+	blockdamage(float) : "Block Damage" : 0 : "The amount of damage to do to any entity that blocks the elevator, per frame."
+	startsound(sound) : "Sound played when the elevator starts moving."
+	stopsound(sound) : "Sound played when the elevator stops moving."
+	disablesound(sound) : "Sound played when the elevator is disabled."
+
+	// Inputs
+	input MoveToFloor(string) : "Start the elevator moving to the specified floor."
+	input Disable(void) : "Stops the elevator and prevents it from moving again."
+	input SetMaxSpeed(float) : "Set the max speed of the elevator."
+
+	// Outputs
+	output OnReachedTop(string) : "Fired when the brush reaches the top."
+	output OnReachedBottom(string) : "Fired when the brush reaches the bottom."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/info_target.vmt") = info_elevator_floor : 
+	"Elevator floor height target."
+[
+	// Outputs
+	output OnReachedFloor(void) : "Fired when an elevator reaches this floor."
+]
+
+//====================================================================================================================
+// SPAWN
+//====================================================================================================================
+
+@PointClass base(PlayerClass, Targetname, EnableDisableDisabled, Angles, TeamNum, Studiomodel) Studioprop() = ins_spawnpoint : "Spawnpoint"
+[
+	spawnflags(flags) =
+	[
+		1 : "Controlled by a Spawn Zone" : 0
+	]
+
+	StartDisabled(boolean) : "Start Disabled" : 0 : "Start disabled. Ignored if controlled by spawn zone"
+	controlpoint(target_destination) : "Associated Control Point" : : "The team_control_point associated with this spawn. Ownership of control points will control this spawn point's enabled state."
+	SquadID(integer) : "Associated Squad" : -1 : "If >=0, this spawn point will be associated with the given squad ID"
+]
+
+@PointClass base(Angles, Targetname) iconsprite("editor/ins_viewpoint.vmt") color(255 0 0) = ins_viewpoint : "Viewpoint"
+[
+]
+
+//====================================================================================================================
+// DEFAULT THEATER ENTITIES
+//====================================================================================================================
+@PointClass base(Angles, Targetname, TeamNum, Studiomodel, BaseGrenade) studio( "models/weapons/w_c4.mdl" ) = grenade_c4 : "Security C4"
+[
+] 
+
+@PointClass base(Angles, Targetname, TeamNum, Studiomodel, BaseGrenade) studio( "models/weapons/w_ied.mdl" ) = grenade_ied : "Insurgent C4 (IED)"
+[
+] 

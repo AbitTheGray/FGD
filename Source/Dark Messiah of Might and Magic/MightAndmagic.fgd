@@ -1,0 +1,106 @@
+@PointClass base(Targetname, PlayerClass, Angles) studio("models/props/CapturePoint/CapturePoint.mdl") = CapturePoint : "Capture point entity for Supremacy game mode."
+[
+	resistance(integer) : "Resistance" : 10 : "Resistance value."
+	active(choices) : "Active" : 1 : "If set, this point is active (can be seen and selected)." =
+	[
+		0: "No"
+		1: "Yes"
+	]
+	TeamNum(choices) : "Team Number" : "0" =
+	[
+		0 : "Unassigned"
+		2 : "Undead Team"
+		3 : "Human Team"
+	]
+
+	spawnflags(Flags) = 
+	[
+		1 : "Stronghold" : 0		// capturing the opponent's stronghold wins the game
+		2 : "Not Capturable" : 0	// if set, this capture point cannot be taken by another team
+		4 : "Capture Once" : 0		// once captured by the other team, this spawn point becomes not capturable
+		8 : "Default Spawn" : 0		// if the player has no capture point selected, he will spawn here
+	]
+
+	FallbackCapturePoint(target_destination) : "Fallback Capture Point" : "" : "Players will spawn at the fallback CP if this point is taken."
+
+	input SetActive(bool) : "(De)Activates the capture point. Inactive capture points cannot be seen or interacted with."
+	input SetCapturable(bool) : "If true, the capture point can be taken. If false, the capture point is permanent."
+
+	output OnBeginCaptureAttempt(void) : "A new capture attempt has been started."
+	output OnCaptureAttemptSuccess(void) : "The current capture attempt (not by the initial owners) succeeded."
+	output OnCaptureAttemptFailure(void) : "The current capture attempt failed."
+	output OnRecaptureAttemptSuccess(void) : "The capture point was re-taken by the initial owners."
+	output OnUncaptureAttemptSuccess(void) : "The capture point was uncaptured (goes to neutral)."
+]
+
+
+@PointClass base(PlayerClass, Angles) studio("models/editor/playerstart.mdl") = info_player_teamspawn : "Spawn point which can be linked to a team."
+[
+	StartDisabled(integer) : "Start Disabled" : 0 : "Begin disabled."
+	TeamNum(choices) : "Team Number" : "2" =
+	[
+		0 : "Unassigned"
+		2 : "Undead Team"
+		3 : "Human Team"
+	]
+	CapturePoint(target_destination) : "Capture Point" : "" : "Name of the capture point entity to which this spawn belongs."
+
+	input Enable(void) : "Enable."
+	input Disable(void) : "Disable."
+	output OnPlayerSpawn(void) : "A player is spawned at this spawn point."
+]
+
+@SolidClass base(Door, Origin) = func_door_mm : 
+	"A brush entity for use as a player-useable door that appears on the hud."
+[
+	doorId(string) : "The id of this door"
+]
+
+@PointClass base(Targetname, Parentname, Angles) cylinder(255 255 255, targetname, target, radius, targetname, targetname, radius) color(255 192 0) size(16 16 16) = c_env_path :
+	"Waypoint on a path."
+[
+	Next(target_destination) : "Next" : "" : "Name of the next waypoint along the path."
+	AltNext(target_destination) : "AltNext" : "" : "Name of the alternate next path waypoint."
+	Condition(string) : "Condition" : "" : "If this condition is true, the alternate path is chosen. Example: 'team(castle_capture_point) == 2'"
+
+	Anim(string) : "Animation" : "" : "The animation to play on any entities passing through this waypoint."
+	Sound(string) : "Sound" : "" : "The sound that any entities passing through this waypoint should play."
+
+	Speed(float) : "Speed" : "0" : "Speed in inches/sec when moving through this point (0 = use default)."
+]
+
+@BaseClass base(Targetname, Parentname, Angles, Studiomodel) = c_env_frou_frou : "Client-only graphical finery."
+[
+	DefaultAnim(string) : "Default Animation" : "" : "The name of the idle animation that this prop will revert to whenever it finishes a random or forced animation."
+
+	RandomAnimation(choices) : "Randomly Animate" : 0 : "If set, this prop will randomly choose and play animations, based upon the times specified in 'Min/Max Random Anim Time'. Inbetween the random animations, it will revert to playing the 'Default Animation'." =
+	[
+		0: "No"
+		1: "Yes"
+	]
+	MinAnimTime(float) : "Min Random Anim Time" : "5" : "Minimum time between random animations."
+	MaxAnimTime(float) : "Max Random Anim Time" : "10" : "Maximum time between random animations."
+
+	PathStart(target_destination) : "Path Start" : "" : "If non-empty, the starting c_env_path for this entity."
+
+	DefaultSpeed(float) : "DefaultSpeed" : "12" : "Default speed in inches/sec."
+
+	// input
+	input SetAnimation(string) : "Force the prop to play an animation. The parameter should be the name of the animation."
+	input SetDefaultAnimation(string) : "Set the Default Animation to the one specified in the parameter."
+	input TurnOn(void)	: "Make the prop visible."
+	input TurnOff(void)	: "Make the prop invisible."
+
+	// outputs
+	output OnAnimationBegun(void) : "Fired whenever a new animation has begun playing."
+	output OnAnimationDone(void) : "Fired whenever an animation is complete."
+]
+
+@PointClass base(c_env_frou_frou, EnableDisable) studioprop() = c_env_paokai : "A flying paokai (client-only effect)."
+[
+]
+
+@PointClass base(c_env_frou_frou, EnableDisable) studioprop() = c_env_particle : "A particle effect (client-only effect)."
+[
+	ParticleFilename(string) : "Particle Filename" : "" : "The name of the particle effect that will be created by this entity."
+]

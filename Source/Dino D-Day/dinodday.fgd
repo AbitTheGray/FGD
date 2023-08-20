@@ -1,0 +1,820 @@
+//====== Copyright © 2014, 800 North, All rights reserved. =======
+//
+// Purpose: Dino D-Day game definition file (.fgd) 
+//
+//=============================================================================
+
+@include "base.fgd"
+
+@MaterialExclusion
+[
+    // Names of the sub-directories we don't want to load materials from
+    "engine"
+    "hud"
+    "vgui"
+	"effects"
+	"particles"
+	"particle"
+	"sprites"
+]
+
+@PointClass base(PlayerClass, Angles, Targetname, GameModeTypeDeclaration) studio("models/editor/playerstart.mdl") = info_player_axis :
+	"This entity indicates the position and facing direction at which a red player will spawn. Any number of "+
+	"info_player_axis entities may be placed in a map."
+[
+	StartDisabled(boolean) : "StartDisabled" : 0 : "Should this spawn point be disabled on map load?"
+	
+	input Disable(void) : "Disable this spawn point."
+	input Enable(void) : "Enable this spawn point."
+]
+
+
+@PointClass base(PlayerClass, Angles, Targetname, GameModeTypeDeclaration) studio("models/editor/playerstart.mdl") = info_player_allies :
+	"This entity indicates the position and facing direction at which a blue player will spawn. Any number of "+
+	"info_player_allies entities may be placed in a map."
+[
+	StartDisabled(boolean) : "StartDisabled" : 0 : "Should this spawn point be disabled on map load?"
+	
+	input Disable(void) : "Disable this spawn point."
+	input Enable(void) : "Enable this spawn point."
+]
+
+@PointClass base(PlayerClass, Angles, Targetname, GameModeTypeDeclaration) studio("models/player/axis/styracosaurus_mp.mdl") = info_player_styracosaur :
+	"This entity indicates the position and facing direction at which a blue player will spawn. Any number of "+
+	"info_player_styracosaur entities may be placed in a map."
+[
+	StartDisabled(boolean) : "StartDisabled" : 0 : "Should this spawn point be disabled on map load?"
+	
+	input Disable(void) : "Disable this spawn point."
+	input Enable(void) : "Enable this spawn point."
+]
+
+@PointClass base(PlayerClass, Angles, Targetname, GameModeTypeDeclaration) studio("models/player/axis/trex_mp.mdl") = info_player_trex :
+	"This entity indicates the position and facing direction at which a blue player will spawn. Any number of "+
+	"info_player_trex entities may be placed in a map."
+[
+	StartDisabled(boolean) : "StartDisabled" : 0 : "Should this spawn point be disabled on map load?"
+	
+	input Disable(void) : "Disable this spawn point."
+	input Enable(void) : "Enable this spawn point."
+]
+
+@PointClass base(Angles, BaseNPCMaker, GameModeTypeDeclaration) iconsprite("editor/npc_maker.vmt") = npc_maker : "NPC Maker"
+[
+	NPCType(npcclass) : "Class name of spawned NPC"
+	NPCTargetname(string) : "Childrens' Name"
+	NPCSquadname(string) : "Childrens' Squad Name"
+	NPCHintGroup(string) : "Childrens' Hint Group"
+	
+	additionalequipment(choices) : "Weapons" : "0" =
+	[
+		"weapon_mp40" : "MP-40"
+		"weapon_k98" : "weapon_k98"
+		"0" : "Nothing"
+	]
+]
+
+@PointClass base(Node) studio("models/editor/ground_node_hint.mdl") color(232 219 8) = info_node_perch :
+	"A navigation point that indicates where Microraptors can attach to the ceiling.  They will locate the " +
+	"nearest node and perch there.  Put them in dark places that are good for ambushes."
+[]
+
+@BaseClass color(0 0 200) base(Targetname, Angles) sphere(fademindist) sphere(fademaxdist) = Weapon
+[
+	spawnflags(Flags) =
+	[
+		1 : "Start constrained" : 0
+		2 : "Deny player pickup (reserve for NPC)" : 0
+		4 : "Not puntable by Gravity Gun" : 0
+	]
+
+	output OnPlayerUse(void) : "Fires when the player +uses this weapon"
+	output OnPlayerPickup(void) : "Fires when the player picks up this weapon"
+	output OnNPCPickup(void) : "Fires when an NPC picks up this weapon"
+	output OnCacheInteraction(void) : "Fires when the player 'proves' they've found this weapon. Fires on: Player Touch, +USE pickup, Physcannon pickup, Physcannon punt."
+
+	fademindist(float) : "Start Fade Dist/Pixels" : -1 : "Distance at which the prop starts to fade (<0 = use fademaxdist). If 'Screen Space Fade' is selected, this represents the number of pixels wide covered by the prop when it starts to fade."
+	fademaxdist(float) : "End Fade Dist/Pixels" : 0 : "Maximum distance at which the prop is visible (0 = don't fade out). If 'Screen Space Fade' is selected, this represents the *minimum* number of pixels wide covered by the prop when it fades."
+	fadescale(float) : "Fade Scale" : 1 : "If you specify a fade in the worldspawn, or if the engine is running under dx7, then the engine will forcibly fade out props even if fademindist/fademaxdist isn't specified." +
+												 " This scale factor gives you some control over the fade. Using 0 here turns off the forcible fades." +
+]
+
+@PointClass base(Weapon) studio("models/weapons/w_M1Garand.mdl") = weapon_garand : "M1 Garand" []
+@PointClass base(Weapon) studio("models/props/oildrum.mdl") = weapon_flak30reload : "Flak30 Reload" []
+@PointClass base(Weapon, GameModeTypeDeclaration) studio("models/weapons/w_satchelcharge.mdl") = weapon_satchel : "Satchel Charge" []
+@PointClass base(Weapon) studio("models/weapons/antitankmine.mdl") = weapon_tankmine : "Anti tank mine" []
+@PointClass base(Weapon) studio("models/weapons/w_mp40.mdl") = weapon_mp40 : "MP-40" []
+@PointClass base(Weapon) studio("models/weapons/w_grenade_mk2.mdl") = weapon_grenade : "Grenades" []
+
+@SolidClass base(Targetname, Parentname) = func_precipitation_blocker : 
+	"A brush entity that prevents rain and snow inside its volume."
+[
+]
+
+@BaseClass color(0 0 200) base(Targetname, Angles, Shadow) sphere(fademindist) sphere(fademaxdist) = Item
+[
+	output OnPlayerTouch(void) : "Fires when the player touches this object"
+
+	output OnCacheInteraction(void) : "This output fires when the player proves they have 'found' this item. Fires on: Player Touch (whether or not player actually acquires the item), Picked up by +USE, Picked up by Physcannon, Punted by Physcannon."
+
+	fademindist(float) : "Start Fade Dist/Pixels" : -1 : "Distance at which the prop starts to fade (<0 = use fademaxdist). If 'Screen Space Fade' is selected, this represents the number of pixels wide covered by the prop when it starts to fade."
+	fademaxdist(float) : "End Fade Dist/Pixels" : 0 : "Maximum distance at which the prop is visible (0 = don't fade out). If 'Screen Space Fade' is selected, this represents the *minimum* number of pixels wide covered by the prop when it fades."
+	fadescale(float) : "Fade Scale" : 1 : "If you specify a fade in the worldspawn, or if the engine is running under dx7, then the engine will forcibly fade out props even if fademindist/fademaxdist isn't specified." +
+												 " This scale factor gives you some control over the fade. Using 0 here turns off the forcible fades." +
+
+	spawnflags(Flags) =
+	[
+		1 : "Start Constrained" : 0
+		65536 : "Deathmatch" : 0
+		131072 : "King of the Hill" : 0
+		262144: "Objective" : 0
+		524288: "Capture Points" : 0
+		1048576: "Survival": 0
+	]
+]
+
+@PointClass base(Item) studio("models/Gibs/dromaeosnoutgib.mdl") = item_meatkit : "Small Meat Kit" []
+@PointClass base(Item) studio("models/props/medkit_large.mdl") = item_healthkit : "Health Kit" []
+@PointClass base(Item) studio("models/props/medkit_small.mdl") = item_healthvial : "Small Health Kit" []
+@PointClass base(Item) studio("models/props/ammocan_small.mdl") = item_ammoprimary : "Ammo for primary weapon" []
+
+@PointClass base(prop_dynamic_base,EnableDisable, GameModeTypeDeclaration) sphere(fademindist) sphere(fademaxdist) studioprop() = prop_objective :
+	"A prop that can be placed in hierarchy and can play animations. It can also be configured to break when it takes enough damage. "+
+	"Note that the health of the object will be overridden by the health inside the model, to ensure consistent health game-wide. "+
+	"If the model used by the prop is configured to be used as a prop_physics (i.e. it should be physically simulated) then it CANNOT be "+
+	"used as a prop_dynamic. Upon level load it will display a warning in the console and remove itself. Use a prop_physics instead."+
+	"This prop only takes damage from certain weapons and is meant to be used as a destructible 'objective' within a multiplayer game."
+[
+	HealthOverride(integer) : "HealthOverride" : 0 : "This overrides the health that the model has. 0 means don't override."	
+	
+	output OnDestroyed(void) : "When this objective has been destroyed."
+	
+	input Reset(void) : "Resets this prop."
+	input StartGlow(void) : "Starts the outline glow."
+	input EndGlow(void) : "Ends the outline glow."
+	
+	Team(choices) : "Team" : 0 =
+	[
+		2 : "Allies"
+		3 : "Axis"
+	]
+
+]
+
+@PointClass base(BasePropPhysics) studioprop() sphere(fademindist) sphere(fademaxdist) = prop_ctf_goal :
+	"A prop that is picked up by the T-Rex and taken back to spawn.  Equivalent of the 'flag'."
+[	
+	output OnDestroyed(void) : "When this objective has been destroyed."
+	
+	input Reset(void) : "Resets this prop."
+	input StartGlow(void) : "Starts the outline glow."
+	input EndGlow(void) : "Ends the outline glow."
+
+]
+
+@SolidClass base(Targetname) = ddd_ctf_goal_zone :
+	"A volume inside of which players can drop the flag and score a point."
+[
+	input Enable(void) : "Enables the goal zone (is enabled by default)."
+	input Disable(void) : "Disable the goal zone."
+	
+	output FlagCaptured(void) : "Fired when a flag is dropped in here."
+]
+
+@NPCClass base(BaseNPC) studio("models/Dinosaurs/eudimorphodon.mdl") = npc_pterosaur : "Pterosaur"
+[
+	input FlyAway( string ) : "Forces the pterosaur to fly to the nearest crow flyto hint node."
+
+	bomb(choices) : "Bomb?" : 0 =
+	[
+		0 : "No."
+		1 : "Yes. Equipped with bomb."
+	]
+	
+	shouldgetbomb(choices) : "Should Get Bomb?" : 0 =
+	[
+		0 : "Yes.  I want bombs."
+		1 : "No.  Just going to chase enemy."
+	]
+]
+
+@NPCClass base(BaseNPC) studio("models/Dinosaurs/trex.mdl") = npc_trex : "T-Rex" [
+
+	output StartCharge(void) : "Fired when the Trex starts charging an enemy."
+	output EndCharge(void) : "Fired when the Trex stops charging, or runs into something."
+]
+
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/styracosaurus/styracosaurus.mdl") = npc_styracosaur : "Styracosaurus" [
+	output OnDeath(void) : "Fired when the Styracosaur dies."
+]
+
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/brachiosaurus/brachiosaurus.mdl") = npc_brachiosaurus : "Brachiosaurus" [
+]
+
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/raptor.mdl") = npc_raptor : "Raptor" []
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/compy.mdl") = npc_compy : "Compy" []
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/stygimoloch.mdl") = npc_stygi : "Stygimoloch" []
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/desmatosuchus.mdl") = npc_desma : "Desmatosuchus" []
+@NPCClass base(BaseNPC) studio("models/npcs/dinosaurs/microraptor.mdl") = npc_micro : "Microraptor" []
+
+@SolidClass base(Trigger, GameModeTypeDeclaration) = ddd_control_point : "Dino D-Day control point."
+[
+	Capturers(integer) : "Capturers" : 1 : "Number of players needed to start capturing point."
+	TimeToCapture(float) : "TimeToCapture" : 0 : "Time needed to capture point."
+	LocationName(string) : "LocationName" : "" : "Where this control point is located on map.  i.e. Fossil Room."
+	Team(choices) : "Team" : 0 =
+	[
+		2 : "Allies"
+		3 : "Axis"
+	]
+	Reset(integer) : "Reset" : 0 : "How much time for control point to reset."
+	IsKOTH(choices) : "IsKOTH" : 0 =
+	[
+		0 : "No."
+		1 : "Yes. KOTH capture point."
+	]
+	Location(integer) : "Location" : 0 : "Number from 1 to 5 corresponding to the position that this capture point will occupy in the point status bar.  1 is extreme left, 3 is center, 5 is extreme right."
+
+	InstantCapture(choices) : "InstantCapture" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	StyracosaurGoal(choices) : "StyracosaurGoal" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	NoBadge(choices) : "NoBadge" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	output Captured(void) : "Control point is captured."
+	output RedCapture(void) : "Control point captured by Red team."
+	output BlueCapture(void) : "Control point captured by Blue team."
+	output RedLostControl(void) : "Control point lost by Red team."
+	output BlueLostControl(void) : "Control point lost by Blue team."
+	
+	input Reset(void) : "Resets the control point."
+	input Enable(void) : "Enables the control point (is enabled by default)."
+	input Disable(void) : "Disable the control point."
+	input TimeToCapture(float) : "Time needed to capture point."
+
+	spawnflags(flags) =
+	[
+		1: "Clients" : 1
+		2: "NPCs" : 0
+		4: "Pushables": 0
+		8: "Physics Objects" : 0
+		16: "Only player ally NPCs" : 0
+		32: "Only clients in vehicles" : 0
+		64: "Everything (not including physics debris)" : 0
+		512: "Only clients *not* in vehicles" : 0
+		1024: "Physics debris" : 0
+		2048: "Only NPCs in vehicles (respects player ally flag)" : 0
+		4096: "Correctly account for object mass (trigger_push used to assume 100Kg) and multiple component physobjs (car, blob...)" : 0
+		65536 : "Deathmatch" : 0
+		131072 : "King of the Hill" : 0
+		262144: "Objective" : 0
+		524288: "Capture Points" : 0
+		1048576: "Survival": 0
+	]
+]
+
+@SolidClass base(Trigger) = ddd_safe_spawn_zone : "Dino D-Day safe respawn zone (where no suicide occurs)."
+[
+	input Enable(void) : "Enables the control point (is enabled by default)."
+	input Disable(void) : "Disable the control point."
+	
+	spawnflags(flags) =
+	[
+		1: "Clients" : 1
+		2: "NPCs" : 0
+		4: "Pushables": 0
+		8: "Physics Objects" : 0
+		16: "Only player ally NPCs" : 0
+		32: "Only clients in vehicles" : 0
+		64: "Everything (not including physics debris)" : 0
+		512: "Only clients *not* in vehicles" : 0
+		1024: "Physics debris" : 0
+		2048: "Only NPCs in vehicles (respects player ally flag)" : 0
+		4096: "Correctly account for object mass (trigger_push used to assume 100Kg) and multiple component physobjs (car, blob...)" : 0
+		65536 : "Deathmatch" : 0
+		131072 : "King of the Hill" : 0
+		262144: "Objective" : 0
+		524288: "Capture Points" : 0
+		1048576: "Survival": 0
+	]
+]
+
+@SolidClass base(Trigger, GameModeTypeDeclaration) = ddd_mg42_volume : "Volume player must touch to equip an MG42 (place near MG nest)."
+[
+	input Enable(void) : "Enables this volume (is enabled by default)."
+	input Disable(void) : "Disables this volume."
+	
+	ModelName(string) : "Model Name" : "" : "The name of the MG42 Model that this volume is tied to.  Player's view and model will line up with this model when operating the gun."
+]
+
+@PointClass base(Targetname, GameModeTypeDeclaration) = koth_timer : "Timer for KOTH game type."
+[
+	
+	input StartRedCount(void) : "Start ticking down Red's counter."
+	input StartBlueCount(void) : "Start ticking down Blue's counter."
+	input PauseCount(void) : "Don't tick anyone's counter down."
+	input ResetCount(void) : "Reset this counter."
+	output RedWins(void) : "Timer hit zero for Red Team."
+	output BlueWins(void) : "Timer hit zero for Blue Team."
+]
+
+@PointClass base(Targetname, GameModeTypeDeclaration) = ddd_point_master : "Master for all control points."
+[
+	BigDinosaur(choices) : "Dinosaur boss" : 0 =
+	[
+		0 : "None"
+		1 : "Styracosaur"
+		2 : "T-Rex"
+	]
+
+	CapsToWinRound(integer) : "CapsToWinRound" : 0 : "How many capture points must be controlled to win a round?  IMPORTANT:  ConVar 'playto' determines how many rounds end a match!!"
+	output EnableCaps(void) : "Enables capture points when round starts."
+	output ResetCaps(void) : "Reset capture points."
+	output GameEnd(void) : "Fired when one team reaches enough points to end game.  Usually link this output to a game_end entity."
+	output BlueWins(void) : "Fired when this is a deathmatch point master if blue team wins."
+	output RedWins(void) : "Fired when this is a deathmatch point master if red team wins."
+	
+	input RedCapture(void) : "Axis captured a point."
+	input BlueCapture(void) : "Allies captured a point."
+	input RedLoss(void) : "Axis lost a point."
+	input BlueLoss(void) : "Allies lost a point."
+]
+
+@PointClass base(Targetname, GameModeTypeDeclaration) = ddd_objective_master : "Master for objectives."
+[
+	Objective11(string) : "Objective11" : "" : "The primary objective for stage one of the map."
+	Objective12(string) : "Objective12" : "" : "The secondary objective for stage one of the map."
+	Objective11Targets(integer) : "Objective11Targets" : 0 : "How many targets are there for the first stage, first objective (if any)."
+	Objective12Targets(integer) : "Objective12Targets" : 0 : "How many targets are there for the first stage, second objective (if any)."
+	Objective21(string) : "Objective21" : "" : "The primary objective for stage two of the map."
+	Objective22(string) : "Objective22" : "" : "The secondary objective for stage two of the map."
+	Objective21Targets(integer) : "Objective21Targets" : 0 : "How many targets are there for the second stage, first objective (if any)."
+	Objective22Targets(integer) : "Objective22Targets" : 0 : "How many targets are there for the second stage, second objective (if any)."
+	HasBossBattle(choices) : "HasBossBattle" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	BigDinosaur(choices) : "Dinosaur boss" : 0 =
+	[
+		0 : "None"
+		1 : "Styracosaur"
+		2 : "T-Rex"
+	]
+	
+	output ObjectiveOneReached(void) : "Objective one has been reached."
+	output ObjectiveTwoReached(void) : "Objective two has been reached."
+	output ResetObjectives(void) : "Objectives have been reset."
+	output EndGame(void) : "Fired when one all objectives are reached.  Usually link this output to a game_end entity."
+	output TimerExpired(void) : "Fired when the timer for objectives runs out."
+	output AlliesWin(void) : "Fired when the Allies win the round."
+	output AxisWin(void) : "Fired when the Axis win the round."
+	output StyracosaurSpawned(void) : "Fired when the Styracosaur spawns."
+	
+	input IncrementObjective11(void) : "Add one point to stage one objective one."
+	input IncrementObjective12(void) : "Add one point to stage one objective two."
+	input IncrementObjective21(void) : "Add one point to stage two objective one."
+	input IncrementObjective22(void) : "Add one point to stage two objective two."
+	input TriggerStageTwo(void) : "Trigger stage two of map."
+	input ResetObjectives(void) : "Reset the objectives."
+	input AlliesWin(void) : "The Allies objective has been reached."
+	input AxisWin(void) : "The Axis objective has been reached."
+	input SpawnBigDinosaur(void) : "This triggers the spawning of the Big Dinosaur."
+]
+
+@PointClass base(Targetname) = info_pterosaur_spawn : "Pterosaur spawn point."
+[
+	input Enable(void) : "Enable this spawn point."
+	input Disable(void) : "Disable this spawn point."
+]
+
+@PointClass base(Targetname) = info_trex_spawn : "T-Rex spawn point."
+[
+	input Enable(void) : "Enable this spawn point."
+	input Disable(void) : "Disable this spawn point."
+]
+
+@FilterClass base(BaseFilter) size(-8 -8 -8, 8 8 8) = filter_activator_team :
+	"A filter that filters by the team of the activator."
+[
+	filterteam(choices) : "Filter Team Number" : 2 : 
+		"The team number to filter by.  If the filter mode is Allow, only entities whose "+
+		"team number matches the given team will pass the filter. If the filter mode is Disallow, "+
+		"all entities EXCEPT those whose team number matches the given team will pass the filter." =
+	[
+		2 : "Axis"
+		3 : "Allies"
+	]
+]
+
+@SolidClass base(Targetname, GameModeTypeDeclaration) = func_team_wall :
+	"Walls that players of a certain team are unable to pass through" 
+[
+	
+	ClipTeamNumber(choices) : "Team to block" : 2 =
+	[
+		2 : "Axis"
+		3 : "Allies"
+	]	
+	
+	input Enable(void) : "Enable this player clip."
+	input Disable(void) : "Disable this player clip."
+	
+	StartEnabled(choices) : "StartEnabled" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+@PointClass base(Targetname, GameModeTypeDeclaration) iconsprite("editor/ambient_generic.vmt") sphere() = ambient_announcer : "Announcer sounds.  These don't get reset when the map respawns."
+[
+	message(sound) report : "Sound Name" : "" : "Name of the GameSound entry for the sound to play. Also supports direct .wav filenames."
+	health(integer) : "Volume" : 10 : "Sound volume, expressed as a range from 0 to 10, where 10 is the loudest."
+	preset(choices) :"Dynamic Presets" : 0 =						// NEEDHELP
+	[
+		0: "None"
+		1: "Huge Machine"
+		2: "Big Machine"
+		3: "Machine"
+		4: "Slow Fade in"  
+		5: "Fade in"
+		6: "Quick Fade in"
+		7: "Slow Pulse"
+		8: "Pulse"
+		9: "Quick pulse"
+		10: "Slow Oscillator"
+		11: "Oscillator"
+		12: "Quick Oscillator"
+		13: "Grunge pitch"
+		14: "Very low pitch"
+		15: "Low pitch"
+		16: "High pitch"
+		17: "Very high pitch"
+		18: "Screaming pitch"
+		19: "Oscillate spinup/down"
+		20: "Pulse spinup/down"
+		21: "Random pitch"
+		22: "Random pitch fast"
+		23: "Incremental Spinup"
+		24: "Alien"
+		25: "Bizzare"
+		26: "Planet X"
+		27: "Haunted"
+	]
+	volstart(integer) : "Start Volume" : 0							// NEEDHELP
+	fadeinsecs(integer) : "Fade in time in seconds (0-100)" : 0		// NEEDHELP
+	fadeoutsecs(integer) : "Fade out time in seconds (0-100)" : 0	// NEEDHELP
+	pitch(integer) : "Pitch" : 100 : "Sound pitch, expressed as a range from 1 to 255, where 100 is the sound's default pitch."
+	pitchstart(integer) : "Start Pitch" : 100						// NEEDHELP
+	spinup(integer) : "Spin up time (0-100)" : 0					// NEEDHELP
+	spindown(integer) : "Spin down time (0-100)" : 0				// NEEDHELP
+	lfotype(integer) : "LFO type 0)off 1)sqr 2)tri 3)rnd" : 0		// NEEDHELP
+	lforate(integer) : "LFO rate (0-1000)" : 0						// NEEDHELP
+	lfomodpitch(integer) : "LFO mod pitch (0-100)" : 0				// NEEDHELP
+	lfomodvol(integer) : "LFO mod vol (0-100)" : 0					// NEEDHELP
+	cspinup(integer) : "Incremental Spinup Count" : 0				// NEEDHELP
+	radius(string) : "Max Audible Distance" : "1250" : "Maximum distance at which this sound is audible."
+	spawnflags(flags) =
+	[
+		1: "Play everywhere" : 0
+		16:"Start Silent": 1
+		32:"Is NOT Looped": 1
+	]
+	SourceEntityName(target_destination) : "SourceEntityName" : : "If an entity is specified, sound will come from this named entity instead of the location of ambient_generic."
+
+	// Inputs
+	input Pitch(integer) : "Sets the sound pitch, expressed as a range from 1 to 255, where 100 is the sound's default pitch."
+	input PlaySound(void) : "Starts the sound."
+	input StopSound(void) : "Stops the sound if it is playing."
+	input ToggleSound(void) : "Toggles the sound between playing and stopping."
+	input Volume(integer) : "Sets the sound volume, expressed as a range from 0 to 10, where 10 is the loudest."
+	input FadeIn(integer) : "Fades the sound up to full volume over a specified number of seconds, with a range from 0 to 100 seconds."
+	input FadeOut(integer) : "Fades the sound to silence over a specified number of seconds, with a range from 0 to 100 seconds."
+	
+	duration(float) : "Duration of sound" : "-1.0" : "How long is this sound?  Ambient generic will fire an output at the end. -1 means it won't fire the output."
+	output OnSoundEnd(void) : "Fired when the sound ends.  Determined by its duration.  Doesn't fire if duration is -1."
+]
+
+@SolidClass = func_ladder : 
+	"Ladder. Players will be able to freely along this brush, as if it was a ladder. If you are using a model prop " +
+	"for the visual representation of the ladder in the map, apply the toolsinvisibleladder material to the " +
+	"func_ladder brush."
+[
+]
+
+@SolidClass base(Targetname, GameModeTypeDeclaration) = func_regenerate :
+	"Regeneration zone for players."
+[
+	associatedmodel(target_destination) : "Associated Model" : "" : "The prop_dynamic that represents this zone in the world. The associated model should have appropriate open and close animations for when players interact with the zone."
+]
+
+@SolidClass base(BreakableBrush, Origin, RenderFields, Shadow, GameModeTypeDeclaration) = func_breakable_objective : 
+	"A brush entity that can be broken from damage, or an input." 
+[
+	minhealthdmg(integer) : "Min Damage to Hurt" : 0 : "The prop will ignore any damage events if the damage is less than this amount."
+
+	_minlight(string) : "Minimum Light Level" : : "The minimum level of ambient light that hits this brush."
+	physdamagescale(float) : "Physics Impact Damage Scale" : "1.0" : "Scales damage energy when this object is hit by a physics object. NOTE: 0 means this feature is disabled for backwards compatibility.\nSet to 1.0 for materials as strong as flesh, smaller numbers indicate stronger materials."
+	
+	Team(choices) : "Team" : 0 =
+	[
+		2 : "Allies"
+		3 : "Axis"
+	]
+]
+
+@SolidClass base(BreakableBrush, Origin, RenderFields, Shadow, GameModeTypeDeclaration) = func_breakable_styracosaur : 
+	"A brush entity that can be broken only by the Styracosaur - or by map inputs." 
+[
+	minhealthdmg(integer) : "Min Damage to Hurt" : 0 : "The prop will ignore any damage events if the damage is less than this amount."
+
+	_minlight(string) : "Minimum Light Level" : : "The minimum level of ambient light that hits this brush."
+	physdamagescale(float) : "Physics Impact Damage Scale" : "1.0" : "Scales damage energy when this object is hit by a physics object. NOTE: 0 means this feature is disabled for backwards compatibility.\nSet to 1.0 for materials as strong as flesh, smaller numbers indicate stronger materials."
+]
+
+@SolidClass base(Targetname, GameModeTypeDeclaration) = ddd_bomb_plant_zone :
+	"Grants players the ability to plant satchel charges in this volume."
+[
+	associatedmodel(target_destination) : "Associated Model" : "" : "A model that this zone is associated with."
+]
+
+@SolidClass base(Trigger, GameModeTypeDeclaration) = ddd_class_trigger : "A trigger that can only be tripped by a specific Dino D-Day class."
+[
+	wait(integer) : "Delay Before Reset" : 1 : "Amount of time, in seconds, after the trigger_multiple has triggered before it can be triggered again. If set to -1, it will never trigger again (in which case you should just use a trigger_once)."
+
+	// Inputs
+	input TouchTest(void) : "Tests if the trigger is being touched and fires an output based on whether the value is true or false." 
+	
+	 
+	// Outputs
+	output OnTrigger(void) : "Fired whenever the trigger is activated."
+	output OnTouching(void) : "Fired when the TestTouch input is true (something is touching the trigger.)"
+	output OnNotTouching(void) : "Fired when the TestTouch input is not true (nothing is touching the trigger.)"
+	
+	input Enable(void) : "Enables this trigger."
+	input Disable(void) : "Disables this trigger."
+	
+	//This MUST match up with the SPECIALCLASS enum in ddd_shareddefs.h to work.
+	Class(choices) : "Class" : 0 =
+	[
+		1 : "Desmatosuchus"
+		2 : "Velociraptor"
+		3 : "Dilophosaurus"
+		4 : "Kurt Streicher"
+		5 : "Karl Hissmann"
+		6 : "Wolfgang von Graff"
+		7 : "Jack Hardgrave"
+		8 : "Joe Spencer"
+		9 : "Nigel Blithe-Crossley"
+		10: "Ilona Vike"
+		11: "Camille Brun"
+		12: "Jakob Frank"
+		13: "Styracosaur"
+	]
+]
+
+@BaseClass base(BaseNPC ) = RappelNPC
+[
+	waitingtorappel(boolean) : "Waiting to Rappel?" : "No" : "If yes, this NPC spawns suspended in air and awaits a BeginRappel input. It will then spawn a zipline and slide down. When it hits the ground, NPC will cut away the line and try to move forward a few feet to make room for the next NPC. The NPC will not attempt to clear its landing space if it cannot do so by taking a few steps forward"
+
+	// Inputs
+	input BeginRappel(void) : "BeginRappel"
+
+	// Outputs
+	output OnRappelTouchdown(void) : "Fires when done rappeling"
+]
+
+@BaseClass base(BaseNPC) = BaseGerman
+[
+	additionalequipment(choices) : "Weapons" : "weapon_mp40" =
+	[
+		"weapon_mp40" : "MP40"
+		"weapon_k98" : "k98"
+		"weapon_mp44" : "MP44"
+		"0" : "Nothing"
+	]
+
+	spawnflags(Flags) = 
+	[
+		65536 :  "Start LookOff" : 0
+		131072	: "Don't drop grenades" : 0
+		262144  : "Is Guard" : 0
+	]
+
+	NumGrenades(choices) : "Number of Grenades" : "2" =
+	[
+		"0" : "None"
+		"1" : "1"
+		"2" : "2"
+		"3" : "3"
+		"999999" : "Unlimited"
+	]
+	
+	TeleportGrenades(choices) : "Teleportation" : "0" =
+	[
+		"0" : "Disabled"
+		"1" : "Teleport Grenades"
+	]
+
+	// Inputs
+	input LookOn(void) : "Look normally"	
+	input LookOff(void) : "Don't look for myself, use other squad member's eyes"
+	input StartPatrolling(void) : "Patrol whenever I'm idle or alert."
+	input StopPatrolling(void) : "Stop patrolling when I'm idle or alert."
+	input ThrowGrenadeAtTarget(target_destination) : "Throw a grenade at the specified target."
+]
+
+@NPCClass base(BaseGerman) studio("models/player/axis/adolf.mdl") = npc_german : "German Soldier"
+[
+	input Assault(string) : "Start an assault. Parameter passed in should be the name of the rally point."
+
+	model(choices) : "Model" : "models/player/axis/adolf.mdl" : "Regular Soldier" = 
+	[
+		"models/player/axis/adolf.mdl" : "Adolf"
+		"models/player/axis/heinrich.mdl" : "Heinrich"
+		"models/player/axis/karl.mdl" : "Karl"
+	]
+
+	tacticalvariant(choices) : "Tactical Variant" : "0" =
+	[
+		"0" : "Normal Tactics"
+		"1" : "Pressure the enemy (Keep advancing)"
+		"2" : "Pressure until within 30ft, then normal"
+	]
+]
+
+@NPCClass base(BaseNPC) studio("models/npcs/microcraptor.mdl") = npc_dinosaur : "Generic Dinosaur"
+[
+]
+
+@PointClass base(Targetname, GameModeTypeDeclaration) = ddd_game_director : "Game director entity for Survival mode." [
+	output OnGameReset(void) : "Fires the game is reset in survival mode."
+	output OnBossWaveStarted(void) : "Fired when the final round is reached and a boss is spawned."
+	output OnBossSpawned(void) : "Fired when the boss spawns."
+
+	input SpawnBoss(void) : "Spawn the boss."
+]
+
+//-------------------------------------------------------------------------
+//
+// Singleplayer Entities (everything below this)
+//
+//-------------------------------------------------------------------------
+@PointClass base(Targetname) = ddd_singleplayer_rules : "Used to tell game rules that this is a singleplayer map and which class the map is for."
+[
+	Class(choices) : "Class" : 0 =
+	[
+		1 : "Desmatosuchus"
+		2 : "Raptor"
+		3 : "Dilophosaurus"
+		4 : "Kurt Streicher"
+		5 : "Karl Hissmann"
+		6 : "Wolfgang von Graff"
+		7 : "Jack Hardgrave"
+		8 : "Joe Spencer"
+		9 : "Nigel Blythe-Crossley"
+		10: "Ilona Vike"
+		11: "Camille Brun"
+		12: "Jakob Frank"
+		15: "Trigger"
+		16: "Stygimoloch"
+		17: "Compy"
+		18: "Microraptor"
+	]
+]
+//-------------------------------------------------------------------------
+//
+// Scripted Events
+//
+//-------------------------------------------------------------------------
+
+@BaseClass base(Targetname, Parentname, Angles) color(255 0 255) sphere(m_flRadius) = BaseScripted
+[
+	m_iszEntity(target_destination) : "Target NPC" : : "The name or class name (such as 'npc_zombie') of an NPC to use for this script."
+	m_iszIdle(string) : "Pre Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play before the action animation if the NPC must wait for the script to be triggered. Use 'Start on Spawn' flag or MoveToPosition input to play this idle animation."
+	m_iszEntry(string) : "Entry Animation" : "" : "The name of the sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play when the sequence starts, before transitioning to play the main action sequence."
+	m_iszPlay(string) : "Action Animation" : "" : "The name of the main sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play."
+	m_iszPostIdle(string) : "Post Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play after the action animation."
+	m_iszCustomMove(string) : "Custom Move Animation" : "" : "Used in conjunction with the 'Custom movement' setting for the 'Move to Position' property, specifies the sequence (such as 'crouch_run01') or activity (such as 'ACT_RUN') to use while moving to the scripted position."
+	m_bLoopActionSequence(boolean) : "Loop Action Animation?" : 0
+	m_bSynchPostIdles(boolean) : "Synch Post Idles?" : 0
+
+	m_flRadius(integer) : "Search Radius (0=everywhere)" : 0 : "Radius to search within for an NPC to use. 0 searches everywhere."
+	m_flRepeat(integer) : "Repeat Rate ms" : 0
+	m_fMoveTo(Choices) : "Move to Position" : 1 =
+	[
+		0 : "No"
+		1 : "Walk"
+		2 : "Run"
+		3 : "Custom movement"
+		4 : "Instantaneous"
+		5 : "No - Turn to Face"
+	]
+	m_iszNextScript(target_destination) : "Next Script" : : "The name of the script to run immediately after this script completes. The NPC will not return to AI between the two scripts."
+	m_bIgnoreGravity(boolean) : "Ignore Gravity on NPC during script" : 0 : "If this is set to 'Yes', the NPC will not be subject to gravity while playing this script."
+
+	m_bDisableNPCCollisions(boolean) : "Disable NPC collisions during script" : 0 : "Useful for when NPCs playing scripts must interpenetrate while riding on trains, elevators, etc. This only disables collisions between the NPCs in the script and must be enabled on BOTH scripted_sequences."
+
+
+	// Inputs
+	input BeginSequence(void) : "Summons an NPC to act out the scripted sequence."
+	input MoveToPosition(void) : "Summons an NPC to the script location. They will play their scripted idle (or ACT_IDLE if none is specified) until BeginSequence is triggered."
+	input CancelSequence(void) : "Stops the scripted sequence. If fired after a sequence starts, this input will not take effect until the NPC finishes playing the scripted action animation."
+
+	// Outputs
+	output OnBeginSequence(void) : "Fires when the action animation begins playing."
+	output OnEndSequence(void) : "Fires when the action animation completes."
+	output OnCancelSequence(void) : "Fires when the sequence is cancelled."
+	output OnCancelFailedSequence(void) : "Fires when the sequence is cancelled without ever playing (OnCancelSequence will also fire)."
+	output OnScriptEvent01(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 1 } in the QC."
+	output OnScriptEvent02(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 2 } in the QC."
+	output OnScriptEvent03(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 3 } in the QC."
+	output OnScriptEvent04(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 4 } in the QC."
+	output OnScriptEvent05(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 5 } in the QC."
+	output OnScriptEvent06(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 6 } in the QC."
+	output OnScriptEvent07(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 7 } in the QC."
+	output OnScriptEvent08(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 8 } in the QC."
+]
+
+@PointClass sphere() iconsprite("editor/scripted_sentence.vmt") base(Targetname) = scripted_sentence : "Scripted Sentence"
+[
+	spawnflags(Flags) = 
+	[
+		1 : "Fire Once"  : 1
+		2 : "Followers Only" : 0
+		4 : "Interrupt Speech" : 1
+		8 : "Concurrent" : 0
+		16 : "Speak to Activator" : 1
+	]
+
+	sentence(string) : "Sentence Name" : ""
+	entity(string) : "Speaker Type"
+	delay(string) : "Additional Sentence Time" : "0"
+	radius(integer) : "Search Radius" : 512
+	refire(string) : "Delay Before Refire" : "3"
+	listener(string) : "Listener Type"
+	volume(string) : "Volume 0-10" : "10"
+	attenuation(Choices) : "Sound Radius" : 0 =
+	[
+		0 : "Small Radius"
+		1 : "Medium Radius"
+		2 : "Large  Radius"
+		3 : "Play Everywhere"
+	]
+
+	// Inputs
+	input BeginSentence(void) : "Starts the scripted sentence."
+
+	// Outputs
+	output OnBeginSentence(void) : "Fires when the sentence begins"
+	output OnEndSentence(void) : "Fires when the sentence ends"
+]
+
+@PointClass base(BaseScripted, Angles, SystemLevelChoice) studio("models/editor/scriptedsequence.mdl") sphere(m_flRadius) = scripted_sequence :
+	"Grabs an NPC and makes them play a specified set of animations. The NPC can be told to move to the scripted sequence position or can "+
+	"be told to play the script wherever they currently are. "+
+	"Multiple scripted sequences of the same name will frame-synchronize in the action animation once all the actors have moved to position. "+
+	"This allows tight interaction between actors (one actor grabbing another, hitting them, etc.) The flow is as follows:\n\n"+
+	"1) Move to position using the specified movement animation. If 'Move to Position' is set to NONE, skip to step 2.\n"+
+	"2) If forced to wait for another actor to move to position, play the pre-action idle animation, otherwise skip to step 3. If there is no pre-action idle specified, ACT_IDLE is used.\n"+
+	"3) Fire the OnBeginSequence output.\n"+
+	"4) Play the action animation. If no action animation is specified, skip to step 5.\n"+
+	"5) Play the post-action idle animation. If none is specified, skip to step 6. If the 'Loop in Post Idle' spawnflag is set, keep playing the post-action idle until the script is cancelled. If no post-action idle animation is specified, ACT_IDLE is used.\n"+
+	"6) Fire the OnEndSequence output.\n"+
+	"7) If a next script to play is specified, hand the NPC to the next script and repeat this process for that script.\n\n"+
+	"The MoveToPosition input runs steps 1 and 2, then waits while playing the pre-action idle animation until the BeginSequence input is received.\n\n"+
+	"If the sequence has motion extraction in it, set the 'Don't Teleport NPC On End' spawnflag."
+[
+	spawnflags(Flags) = 
+	[
+		4 : "Repeatable" : 0
+		8 : "Leave Corpse" : 0
+		16 : "Start on Spawn" : 0
+		32: "No Interruptions" : 0
+		64: "Override AI" : 0
+		128: "Don't Teleport NPC On End" : 0
+		256: "Loop in Post Idle" : 0
+		512: "Priority Script" : 0
+		4096: "Allow actor death" : 0
+	]
+
+	
+	onplayerdeath(choices) : "On player death" : 0 : "What should this entity do if the player dies" =
+	[
+		0 : "Do Nothing"
+		1 : "Cancel Script and return to AI"
+	]
+]

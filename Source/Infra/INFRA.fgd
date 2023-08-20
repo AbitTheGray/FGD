@@ -1,0 +1,342 @@
+@include "portal2.fgd"
+
+@PointClass base(Weapon) studio("models/weapons/w_camera.mdl") = infra_camera : "Camera" []
+
+@PointClass base(Item) studio("models/items/batterypack_001.mdl") = item_aa_batteries : "Box of camera batteries" []
+@PointClass base(Item) studio("models/items/batterypack_002.mdl") = item_d_batteries : "Box of flashlight batteries" []
+
+@PointClass base(Targetname, Parentname, Angles, EnableDisable) iconsprite("editor/infra_camera_target.vmt") sphere(range) = infra_camera_target : "Camera target"
+[
+	range(float) : "Maximum Range" : 0 : "A picture of this target is only considered successful if the player is within this range of the entity. Set to zero or less for infinite range."
+	IncludedInTotalCount(boolean) : "Included in Total Count" : 1 : "Is this camera target included in the total camera target count? Awards a point regardless. This can be useful when a single camera target spans multiple maps, such as the dam in infra_c2_m1_reserve1 and infra_c2_m2_reserve2. We can set the camera target in infra_c2_m2_reserve2 not to be included in the total."
+
+	type(choices) : "Type" : "generic" : "Unless this camera target has a custom line for it, this will affect what Mark has to say about this camera target." =
+	[
+		"generic" : "Generic"
+		"waterleak" : "Water Leak"
+		"electrichazard" : "Electric Hazard"
+		"blockedpath" : "Blocked Path"
+		"crackedconcrete" : "Cracked Concrete"
+		"extensivedamage" : "Extensive Damage!"
+		"closecall" : "Close Call!"
+		"silent" : "Silent"
+	]
+
+	output OnPictureTaken(void) : "Fired when the player successfully takes a picture of this for the first time."
+	output OnSpotted(void) : "Fired when the player is in range and saw this entity."
+]
+
+@PointClass base(Targetname) iconsprite("editor/infra_music.vmt") sphere(range) = infra_music : "Music"
+[
+	sound(sound) : "Music" : "" : "Soundscript to play."
+	loop(boolean) : "Loop" : 0 : "Loop the music until stopped?"
+
+	input Start(void) : "Starts the music."
+	input Stop(void) : "Stops the music."
+	input Pause(void) : "Pauses the music."
+	input Resume(void) : "Resumes the music."
+
+	input FadeIn(float) : "Fades in the music from the beginning. Takes fade length in seconds as a parameter."
+	input FadeOut(float) : "Fades out the music. Takes fade length in seconds as a parameter."
+
+	output OnFinishedPlaying(void) : "Fired when the music has reached its end and finished playing."
+]
+
+@PointClass base(Targetname, Parentname, Angles, EnableDisable) iconsprite("editor/infra_corruption_target.vmt") sphere(range) = infra_corruption_target : "Corruption target"
+[
+	photographable(boolean) : "Triggered by Photograph" : 0 : "Can this corruption target also be triggered by taking a photo of it?"
+	needsplayernearby(boolean) : "Needs Player Nearby" : 1 : "Can this corruption target only be triggered if the player is nearby? Doesn't affect photographing, only the Trigger input."
+	range(float) : "Maximum Range" : 0 : "A picture of this target is only considered successful if the player is within this range of the entity. Set to zero or less for infinite range."
+
+	input Trigger(void) : "Marks this corruption target as 'solved'. Doesn't do anything if it's disabled or if it has been previously triggered."
+	output OnTriggered(void) : "Fired when this is triggered."
+]
+
+@PointClass base(Targetname, Parentname, Angles, EnableDisable) iconsprite("editor/infra_repair_target.vmt") sphere(range) = infra_repair_target : "Repair target"
+[
+	input Trigger(void) : "Marks this target as repaired and increments the stat. Doesn't do anything if it's disabled or if it has already been repaired."
+	input Untrigger(void) : "Marks this target as broken again and decrements the stat. It can be triggered again to restore the stat but that won't replay the sound. Doesn't do anything if disabled."
+	output OnTriggered(void) : "Fired when this is triggered."
+	output OnUntriggered(void) : "Fired when this is untriggered."
+]
+
+@PointClass base(Targetname, Parentname, Angles, EnableDisable) iconsprite("editor/infra_water_flow_meter_target.vmt") sphere(range) = infra_water_flow_meter_target : "Water flow meter target"
+[
+	input Trigger(void) : "Marks this target as repaired and increments the stat. Doesn't do anything if it's disabled or if it has already been repaired."
+	input Untrigger(void) : "Marks this target as broken again and decrements the stat. It can be triggered again to restore the stat but that won't replay the sound. Doesn't do anything if disabled."
+	output OnTriggered(void) : "Fired when this is triggered."
+	output OnUntriggered(void) : "Fired when this is untriggered."
+]
+
+@PointClass base(Targetname, Parentname, Angles, EnableDisable) iconsprite("editor/infra_mistake_target.vmt") sphere(range) = infra_mistake_target : "Mistake target"
+[
+	input Trigger(void) : "Marks this mistake as made and increments the stat. Doesn't do anything if it's disabled or if it has already been made."
+	input Untrigger(void) : "Undoes the mistake and decrements the stat. It can be triggered again to re-do the mistake but that won't replay the sound. Doesn't do anything if disabled."
+	output OnTriggered(void) : "Fired when this is triggered."
+	output OnUntriggered(void) : "Fired when this is untriggered."
+]
+
+@PointClass base(Targetname, Parentname, Angles) studio("models/props_clutter/geo_cache_001.mdl") = infra_geocache : "Geocache"
+[
+	output OnPickedUp(void) : "Fired when this is picked up."
+]
+
+@PointClass base(Targetname, Parentname, Angles, Studiomodel, EnableDisable) studio() = infra_document : "Document"
+[
+	extendeduserange(boolean) : "Extended Use Range" : 0 : "Can the player use this document from further away than normal? Useful for certain notes pinned on walls."
+
+	input SetAnimation(string) : "Plays this activity or sequence."
+	output OnUsed(void) : "Fired when this is used."
+	output OnRead(void) : "Fired when the player exits the document view."
+]
+
+@SolidClass base(Door, Origin) = infra_button : "A brush entity that's designed to be used for a player-useable button."
+[
+	spawnflags(flags) =
+	[
+		1 : "Starts Open - OBSOLETE, use 'Spawn Position' key instead" : 0
+		4 : "Non-solid to Player" : 0
+		8: "Passable" : 0
+		32: "Toggle" : 0
+		256: "Use Opens" : 1
+		512: "NPCs Can't" : 0
+		1024: "Touch Opens" : 0
+		2048: "Starts Locked" : 0
+		4096: "Silent" : 0
+		16384: "Can be held down": 0
+	]
+
+	movedir(angle) : "Move Direction (Pitch Yaw Roll)" : "0 0 0" : "The direction the door will move, when it opens."
+
+	input Press(void) : "Presses it as if it was pressed by a player."
+
+	output OnStartPressing(void) : "Fired when the player starts pressing the button."
+	output OnStopPressing(void) : "Fired when the player stops pressing the button."
+	output OnPressed(void) : "Fired when pressed."
+	output OnDamaged(void) : "Fired when damaged."
+]
+
+@PointClass base(Targetname,Angles,Parentname) studioprop("models/editor/camera.mdl") = point_viewcontrol :
+	"A camera entity that controls the player's view. While it's active, the player will see out of the camera."
+[
+	startatplayer(boolean) : "Start at Player" : 0 : "Should the camera start at the player instead of the camera position?"
+	smoothspeed(boolean) : "Smooth Speed" : 1 : "Should the camera speed ease in and ease out?"
+	drawlocalplayer(boolean) : "Draw Local Player" : 0 : "Should the local player be drawn when viewing from this camera?"
+	drawviewmodel(boolean) : "Draw View Model" : 0 : "Should the view model be drawn when viewing from this camera?"
+	drawhud(boolean) : "Draw HUD" : 1 : "Should the HUD be drawn when viewing from this camera?"
+	allowcontrols(boolean) : "Allow Controls" : 0 : "Should the player be allowed to use his movement controls?"
+	freezeinstead(boolean) : "Freeze Instead" : 0 : "If controls are disabled, should the player be disallowed from using any of his controls (+use, +attack, VGUI screens etc.)?"
+	disableatend(boolean) : "Disable at End" : 0 : "Disable the camera once it reaches the end of its path?"
+	holsterweapons(boolean) : "Holster Weapons" : 0 : "Should the player holster his weapons while under control of the camera?"
+	teleportplayertoend(boolean) : "Teleport Player to End" : 0 : "Should the player be teleported to the end once the camera reaches the end of its path?"
+
+	pathlengthinseconds(float) : "Path Length in Seconds" : "5" : "How long does this path last? Smaller numbers means faster camera."
+	fov(float) : "Field of View" : 0 : "0 means player default field of view."
+
+	// Inputs
+	input Enable(void) : "Enable the entity, and start controlling the player's view."
+	input Disable(void) : "Disable the entity, and stop controlling the player's view."
+	input EnableControls(void) : "Enables player's controls."
+	input DisableControls(void) : "Disables player's controls."
+	input EnableCursor(void) : "Enables player's mouse cursor."
+	input DisableCursor(void) : "Disables player's mouse cursor."
+
+	input SetTargetNode(string) : "Have the camera start following a new path."
+	input Reverse(void) : "Should be fired when the camera is already moving along some path or reached the end of it. Causes it to move the same path but backwards."
+
+	// Outputs
+	output OnEndFollow(void) : "Fired when the entity reaches its destination."
+]
+
+@PointClass base(Targetname,Angles,Parentname) studioprop("models/editor/camera.mdl") = point_viewcontrol_node :
+	"A camera entity that controls the player's view. While it's active, the player will see out of the camera."
+[
+	nextnode(target_destination) : "Next Node" : : "The next node on the path."
+
+	fov(float) : "Field of View" : 0 : "0 is the same as the camera field of view. -1 is the same as the player default field of view."
+]
+
+@PointClass base(TalkNPC,Parentname) studio("models/characters/boss.mdl") = infra_boss
+[
+
+]
+
+@PointClass base(TalkNPC,Parentname) studio("models/characters/walter.mdl") = infra_walter
+[
+
+]
+
+@PointClass base(BaseNPC,Parentname,TalkNPC) studio() = infra_person
+[
+	model(choices) : "Model" : "models/characters/male_formal_office_01.mdl" : "Instead of choosing from the presets, you can also type in a model manually to this field." =
+	[
+		"models/characters/male_formal_office_01.mdl" : "Male Formal Office"
+		"models/characters/male_casual_01.mdl" : "Male Casual"
+		"models/characters/female_formal_01.mdl" : "Female Formal"
+		"models/characters/carla.mdl" : "Carla"
+		"models/characters/steve.mdl" : "Steve"
+		"models/characters/amit.mdl" : "Amit"
+	]
+
+	customization(choices) : "Customization" : "" : "Affects the randomization of this NPC's appearance. These can be specified in the appearance scripts." =
+	[
+		"no_suits" : "No Suits"
+		"suits_only" : "Suits Only"
+		"collarshirts_only" : "Collarshirts Only"
+		"hobo_attire" : "Hobo Mix"
+	]
+
+	lightingorigin(target_destination) : "Lighting Origin" : "" : "Select a path_corner entity to specify a location to sample lighting from, instead of using this entity's origin."
+]
+
+@NPCClass base(BaseNPC) studio("models/props_nature/varis.mdl") = infra_crow : "Crow"
+[
+        input FlyAway( string ) : "Forces the crow to fly to the nearest crow flyto hint node."
+
+        deaf(choices) : "Deaf?" : 0 =
+        [
+                0 : "No."
+                1 : "Yes. Ignore sounds."
+        ]
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/infra_use_highlight_control.vmt") = infra_use_highlight_control : "Use highlight control"
+[
+	Target(target_destination) : "Target" : : "The model whose use highlights to control. Not necessarily the use entity. For example, for momentary_rot_buttons use the prop_dynamic parented to it, not the momentary_rot_button itself."
+	HighlightsEnabled(boolean) : "Start with Use Highlights Enabled" : 1 : "Are the use highlights enabled by default?"
+	SelectionOutlineEnabled(boolean) : "Start with Selection Outline Enabled" : 1 : "Is the selection outline enabled by default?"
+
+	input EnableTargetUseHighlights(void) : "Enables target use highlights."
+	input DisableTargetUseHighlights(void) : "Disables target use highlights."
+	input EnableTargetSelectionOutline(void) : "Enables target selection outlines."
+	input DisableTargetSelectionOutline(void) : "Disables target selection outlines."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/infra_use_highlight_hint.vmt") = infra_use_highlight_hint : "Use highlight hint"
+[
+	UseEntity(target_destination) : "Use Entity" : : "The use entity whose use highlights to control."
+	Target(target_destination) : "Target" : : "The entity that receives the use selection outlines when the use entity is selected."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/infra_phone_signal.vmt") = infra_phone_signal : "Phone signal"
+[
+	input SetBars(integer) : "Sets the phone signal strength. Takes a number in the range from 0 to 5, where 0 is no signal and 5 is perfect signal."
+	input Set3G(void) : "Switches the phone to a 3G network."
+	input Set4G(void) : "Switches the phone to a 4G network."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/infra_loading_screen_control.vmt") = infra_loading_screen_control : "Loading screen"
+[
+	input SetDesiredLoadingScreen(string) : "Changes the desired loading screen that will be used when a saved game is loaded on this level. Loading screen name is limited to 32 characters!"
+]
+
+@PointClass base(prop_dynamic_base) studioprop() = infra_crane : "Crane"
+[
+	model(studio) : "World model" : "models/props_machinery/operator_seat_001.mdl"
+	vehiclescript(string) : "Vehicle Script File" : "scripts/vehicles/infra_crane.txt"
+	VehicleLocked(boolean) : "Start locked" : 0
+
+	input Open(void) : "Plays the vehicle's open animation and unlocks the vehicle for entry or exit."
+	input Close(void) : "Plays the vehicle's close animation and locks the vehicle for entry or exit."
+	input EnterVehicle(void) : "Forces the activator (or player) into the vehicle."
+	input ExitVehicle(void) : "Boots the prisoner out of the vehicle."
+	input Viewlock(bool) : "Set true to prevent Gordon from looking around *at all*. Set false to let him look within limits."
+	input SetCanShoot(bool) : "Set if the driver can shoot their weapon."
+	input SetMaxPitch(float) : "Set max pitch for driver."
+	input SetMinPitch(float) : "Set min pitch for driver."
+	input SetMaxYaw(float) : "Set max yaw for driver."
+	input SetMinYaw(float) : "Set min yaw for driver."
+	input EnableControls(void) : "Enables the Pressed outputs."
+	input DisableControls(void) : "Disables the Pressed outputs."
+
+	output PlayerOn(void) : "Player entered the vehicle"
+	output PlayerOff(void) : "Player exited the vehicle"
+	output OnOpen(void) : "Fired when the vehicle is open enough to enter."
+	output OnClose(void) : "Fired when the vehicle too closed to enter."
+
+	output PressedUse(void) : "Fired when the player presses the use key inside the vehicle."
+	output PressedMoveLeft(void) : "Fired when the player presses the moveleft key inside the vehicle."
+	output PressedMoveRight(void) : "Fired when the player presses the moveright key inside the vehicle."
+	output PressedForward(void) : "Fired when the player presses the forward key inside the vehicle."
+	output PressedBack(void) : "Fired when the player presses the backward key inside the vehicle."
+	output PressedAttack(void) : "Fired when the player presses the attack key inside the vehicle."
+	output PressedAttack2(void) : "Fired when the player presses the secondary attack key inside the vehicle."
+
+	output UnpressedMoveLeft(void) : "Fired when the player releases the moveleft key inside the vehicle."
+	output UnpressedMoveRight(void) : "Fired when the player releases the moveright key inside the vehicle."
+	output UnpressedForward(void) : "Fired when the player releases the forward key inside the vehicle."
+	output UnpressedBack(void) : "Fired when the player releases the backward key inside the vehicle."
+	output UnpressedAttack(void) : "Fired when the player releases the attack key inside the vehicle."
+	output UnpressedAttack2(void) : "Fired when the player releases the secondary attack key inside the vehicle."
+
+	output XAxis(string) : "An output that fires whenever the X axis of the player's input changes. i.e. -1 when the player has moveleft key down, 1 when the player has moveright key down, and 0 if neither."
+	output YAxis(string) : "An output that fires whenever the Y axis of the player's input changes. i.e. -1 when the player has backward key down, 1 when the player has forward key down, and 0 if neither."
+	output AttackAxis(string) : "An output that fires whenever the state of the player's attack key changes. i.e. 1 when the player has the attack key down, 0 otherwise."
+	output Attack2Axis(string) : "An output that fires whenever the state of the player's secondary attack key changes. i.e. 1 when the player has the secondary attack key down, 0 otherwise."
+
+	ignoremoveparent(boolean) : "Ignore Move Parent on Exit" : 0 : "Should the player ignore this vehicle's move parent went performing exit checks."
+
+	ignoreplayer(boolean) : "Ignore Player collision" : 0 : "The player wont collide against this vehicle when moving around."
+	playercanshoot(boolean) : "Can the player shoot" : 0 : "Lets the player shoot their weapon while in the vehicle"
+]
+
+@PointClass base(prop_dynamic_base) studioprop() = infra_boat : "Boat"
+[
+	model(studio) : "World model" : "models/props_vehicles/rowboat_driveable.mdl"
+	vehiclescript(string) : "Vehicle Script File" : "scripts/vehicles/infra_boat.txt"
+	VehicleLocked(boolean) : "Start locked" : 0
+
+	input EnterVehicle(void) : "Forces the activator (or player) into the vehicle."
+	input ExitVehicle(void) : "Boots the prisoner out of the vehicle."
+
+	input Lock(void) : "Prevent the player from entering or exiting the vehicle."
+	input Unlock(void) : "Re-allow the player to enter or exit the vehicle."
+
+	output PlayerOn(void) : "Player entered the vehicle"
+	output PlayerOff(void) : "Player exited the vehicle"
+
+	ignoremoveparent(boolean) : "Ignore Move Parent on Exit" : 0 : "Should the player ignore this vehicle's move parent went performing exit checks."
+
+	ignoreplayer(boolean) : "Ignore Player collision" : 0 : "The player wont collide against this vehicle when moving around."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/info_target.vmt") studio("models/editor/axis_helper.mdl") = info_target_viewproxy : "A version of info_target that can persist across level transitions."
+[
+	shouldtransition(boolean) : "Transition Across Levels" : 1 : "This is used in tunnel3, but not in metroride. In metroride we have a similar train setup on the other map so it makes no sense to transition. In tunnel3 the setup is much simpler, so we can just transition the raft model and everything that goes with it."
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/infra_phone_call.vmt") = infra_phone_call : "Phone call"
+[
+	input BeginCallOpportunity(void) : ""
+	input EndCallOpportunity(void) : ""
+
+	SceneFile(scene) : "Scene file"
+
+	output OnStart(void) : "The scene has started"
+	output OnCompletion(void) : "The scene has completed"
+	output OnTrigger1(void) : "Scene trigger 1"
+	output OnTrigger2(void) : "Scene trigger 2"
+	output OnTrigger3(void) : "Scene trigger 3"
+	output OnTrigger4(void) : "Scene trigger 4"
+	output OnTrigger5(void) : "Scene trigger 5"
+	output OnTrigger6(void) : "Scene trigger 6"
+	output OnTrigger7(void) : "Scene trigger 7"
+	output OnTrigger8(void) : "Scene trigger 8"
+	output OnTrigger9(void) : "Scene trigger 9"
+	output OnTrigger10(void) : "Scene trigger 10"
+	output OnTrigger11(void) : "Scene trigger 11"
+	output OnTrigger12(void) : "Scene trigger 12"
+	output OnTrigger13(void) : "Scene trigger 13"
+	output OnTrigger14(void) : "Scene trigger 14"
+	output OnTrigger15(void) : "Scene trigger 15"
+	output OnTrigger16(void) : "Scene trigger 16"
+]
+
+@PointClass base(Targetname, Parentname, Angles) = infra_flowmap_modify : "Flowmap modify"
+[
+	material(string) : "Material" : "" : "Will affect all materials that contain this string in their name."
+	oldflowmap(string) : "Old Flowmap" : "" : "The flowmap texture to use before this entity is triggered."
+	newflowmap(string) : "New Flowmap" : "" : "Changes the flowmap to this texture when triggered."
+
+	input ChangeFlowmap(void) : ""
+]

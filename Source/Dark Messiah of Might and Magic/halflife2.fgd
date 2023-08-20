@@ -1,0 +1,3986 @@
+//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//
+// Purpose: Half-Life 2 game definition file (.fgd) 
+//
+//=============================================================================
+    
+
+@include "base.fgd"
+
+
+//-------------------------------------------------------------------------
+//
+// NPCs
+//
+//-------------------------------------------------------------------------
+@BaseClass base(BaseNPC) = TalkNPC
+[
+	UseSentence(string) : "Use Sentence"
+	UnUseSentence(string) : "Un-Use Sentence"
+
+	input SpeakResponseConcept(string) : "Speak the specified response concept."
+]
+
+@BaseClass base(BaseNPC) = PlayerCompanion
+[
+	input OutsideTransition(void) : "Use this input to teleport the NPC to a hintnode with the Player Squad Transition Point hint type."
+	input EnableAlwaysTransition(void) : "Enable the 'always transition' behavior"
+	input DisableAlwaysTransition(void) : "Disable the 'always transition' behavior"
+	
+	AlwaysTransition(choices) : "Always transition" : "No" : "If yes, this NPC will always teleport to a Player Squad Transition Point if they're not within the trigger_transition volume." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	DontPickupWeapons(choices) : "Prevent picking up weapons?" : "No" : "If yes, this NPC will NOT be allowed to pick up weapons they find on the ground." =
+	[
+		0 : "No"
+		1 : "Yes"	
+	]
+
+	GameEndAlly(choices) : "Is this a vital ally?" : "No" : "If yes, this NPC will cause the game to end if killed." =
+	[
+		0 : "No"
+		1 : "Yes"	
+	]
+
+	input InputMakeGameEndAlly(void) : "Make this NPC a game end ally."
+	input InputMakeRegularAlly(void) : "Make this NPC a regular ally."
+]
+
+@BaseClass base(BaseNPC ) = RappelNPC
+[
+	waitingtorappel(choices) : "Waiting to Rappel?" : "No" : "If yes, this NPC spawns suspended in air and awaits a BeginRappel input. It will then spawn a zipline and slide down. When it hits the ground, NPC will cut away the line and try to move forward a few feet to make room for the next NPC. The NPC will not attempt to clear its landing space if it cannot do so by taking a few steps forward" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Inputs
+	input BeginRappel(void) : "BeginRappel"
+
+	// Outputs
+	output OnRappelTouchdown(void) : "Fires when done rappeling"
+]
+
+@BaseClass = AlyxInteractable
+[
+	// Outputs
+	output OnAlyxStartedInteraction(void) : "Fired when Alyx begins to interact with this entity."
+	output OnAlyxFinishedInteraction(void) : "Fired when Alyx has finished interacting with this entity."
+
+	input InteractivePowerDown(void) : "Shutdown this target."
+]
+
+@BaseClass base(Targetname, Origin, Angles, Global) = CombineBallSpawners
+[
+	spawnflags(Flags) = 
+	[
+		4096 : "Start inactive" : 1
+		8192 : "Combine power supply" : 0
+	]
+
+	ballcount(integer) : "Ball count" : 3 : "This is how many balls will be bouncing around inside the spawner"
+	minspeed(float) : "Min ball speed" : "300.0" : "The minimum speed of balls that fly in the spawner"
+	maxspeed(float) : "Max ball speed" : "600.0" : "The maximum speed of balls that fly in the spawner"
+	ballradius(float) : "Ball radius" : "20.0" : "The radius of the energy balls"
+	balltype(choices) : "Ball Type" : "Combine Energy Ball 1" =
+	[
+		0 : "Combine Energy Ball 1"
+		1 : "Combine Energy Ball 2"
+		2 : "Combine Energy Ball 3"
+	]
+	ballrespawntime(float) : "Ball Respawn Time" : "4.0f" : "The energy balls respawn time"
+
+	input Enable(void) : "Enable spawning of combine balls"
+	input Disable(void) : "Disable spawning of combine balls"
+
+	output OnBallGrabbed(void) : "Fired when a combine ball is grabbed from the field by a mega physcannon"
+	output OnBallReinserted(void) : "Fired when a combine ball is reinserted into the field (only gets triggered when Combine Power supply is checked)"
+	output OnBallHitTopSide(void) : "Fired when a combine ball in hits the top side of the field (only gets triggered when Combine Power supply is checked)"
+	output OnBallHitBottomSide(void) : "Fired when a combine ball in hits the bottom side of the field (only gets triggered when Combine Power supply is checked)"
+	output OnLastBallGrabbed(void) : "Fired when the last combine ball is grabbed from the field by a mega physcannon"
+	output OnFirstBallReinserted(void) : "Fired when the first combine ball is reinserted into the field (only gets triggered when Combine Power supply is checked)"
+]
+
+@SolidClass base(Trigger, Angles) = trigger_physics_trap :
+	"A volumetric trigger that disintegrates enemies"
+[
+	dissolvetype(choices) : "Dissolve Type" : "Energy" =
+	[
+		0 : "Energy"
+		1 : "Heavy electrical"
+		2 : "Light electrical"
+	]
+]
+
+@SolidClass base(Trigger) = trigger_weapon_dissolve :
+	"A volumetric trigger that dissolves all weapons within it"
+[
+	emittername(target_destination) : "Emitter Name" : "" : "Name of a single or multiple entities to use as the basis for the emitted effects."
+
+	// Outputs
+	output OnDissolveWeapon(void) : "Fires when one weapon is starting to dissolve in the trigger volume."
+	output OnChargingPhyscannon(void) : "Fires when the trigger begins to charge the physcannon."
+
+	// Inputs
+	input StopSound(void) : "Stops all sounds."
+]
+
+@SolidClass base(Trigger) = trigger_mass :
+	"A volumetric trigger that fires when a certain mass is reached"
+[
+	referencemass(float) : "Reference Mass" : 60 : "Mass to reach to fire the OnMassReached output"
+
+	// Outputs
+	output OnMassReached(void) : "Fires when the reference mass is reached."
+	output OnMassUnreached(void) : "Fires when the total mass is back below the reference mass."
+]
+
+@SolidClass base(Trigger) = trigger_weapon_strip :
+	"A volumetric trigger that strips combat characters of all weapons"
+[
+	KillWeapons(choices) : "Kill Weapons" : "No" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+@SolidClass base(Trigger) = trigger_super_armor :
+	"A volumetric trigger that bestows super armor to the player"
+[
+]
+
+@SolidClass base(CombineBallSpawners) = func_combine_ball_spawner :
+	"A volumetric trigger that bestows super armor to the player"
+[
+	output OnBallReinserted(void) : "Fired when a combine ball is reinserted into the field (only gets triggered when Combine Power supply is checked)"
+	output OnLastBallGrabbed(void) : "Fired when the last combine ball is grabbed from the field by a mega physcannon"
+]
+
+@BaseClass base(BaseNPC) = VehicleDriverNPC
+[
+	vehicle(target_destination) : "Vehicle to drive"
+
+	spawnflags(Flags) = 
+	[
+		65536 :  "Start Inactive"			: 1
+	]
+
+	input StartFiring(void) : "Tell the driver to attack nearby enemies with the vehicle's weaponry (if any)"
+	input StopFiring(void) : "Tell the driver to stop attacking nearby enemies with the vehicle's weaponry."
+	input GotoPathCorner(string) : "Tell the driver to go to a specific path corner and continue from there."
+]
+
+@PointClass base(Targetname, Angles) studio() = prop_thumper : "Thumper"
+[
+	model(studio) : "World model" : "models/props_combine/CombineThumper002.mdl"
+
+	dustscale(choices) : "Dust Scale" : "Small Thumper" =
+	[
+		128 : "Small Thumper"
+		256 : "Large Thumper"
+	]
+
+	input Enable(void) : "Enable Thumper"
+	input Disable(void) : "Disable Thumper"
+]
+
+@NPCClass base(BaseNPC) studio("models/npc/crow/npc_crow.mdl") = npc_crow : "Crow"
+[
+	input FlyAway( string ) : "Forces the crow to fly to the nearest crow flyto hint node."
+]
+
+@NPCClass base(BaseNPC) studio("models/npc/seagull/npc_seagull.mdl") = npc_seagull : "Seagull"
+[
+	input FlyAway( string ) : "Forces the seagull to fly to the nearest crow flyto hint node."
+]
+
+@NPCClass base(BaseNPC) studio("models/npc/pigeon/npc_pigeon.mdl") = npc_pigeon : "Pigeon"
+[
+	input FlyAway( string ) : "Forces the pigeon to fly to the nearest crow flyto hint node."
+]
+
+
+@BaseClass base(BaseNPC) = BaseHeadcrab
+[
+	startburrowed(choices) : "Start burrowed" : "No" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	spawnflags(flags) = 
+	[
+		65536  :  "Start hidden" : 0
+		131072 :  "Start hanging from ceiling" : 0
+	]
+
+
+	input StartHangingFromCeiling(void) : "Start hanging from ceiling."
+	input DropFromCeiling(void) : "Drop if hanging from ceiling."
+]
+
+
+@NPCClass base(Parentname, BaseNPC) iconsprite("editor/bullseye.vmt") color(255 0 0) = npc_bullseye : "Bullseye"
+[
+	// Unlike other NPCs level designers are allowed to set the health on bullseyes
+	health(Integer) : "Health" : 35
+
+	spawnflags(Flags) = 
+	[
+		65536   : "Not Solid" : 0
+		131072  : "Take No Damage" : 0
+		262144  : "Enemy Damage Only" : 0
+		524288  : "Bleed" : 0
+		1048576 : "Perfect Accuracy" : 0
+		2097152 : "Collide against physics objects (Creates VPhysics Shadow)" : 0
+	]
+	output OnTargeted(void) : "Fires when targeted"
+	output OnReleased(void) : "Fires when no longer targeted"
+]
+
+@BaseClass base(BaseNPC, RappelNPC) = BaseCombine
+[
+	additionalequipment(choices) : "Weapons" : "weapon_smg1" =
+	[
+		"weapon_ar2"		: "AR2"
+		"weapon_shotgun"	: "Shotgun"
+		"weapon_smg1"		: "SMG1"
+		"weapon_stunstick"	: "Stun Stick"
+		"0"					: "Nothing"
+	]
+
+	spawnflags(Flags) = 
+	[
+		65536 :  "Start LookOff"	: 0
+		131072	: "Don't drop grenades" : 0
+	]
+
+	NumGrenades(choices) : "Number of Grenades" : "5" =
+	[
+		"0"			: "None"
+		"1"			: "1"
+		"2"			: "2"
+		"3"			: "3"
+		"4"			: "4"
+		"5"			: "5"
+		"999999"	: "Unlimited"
+	]
+
+	// Inputs
+	input LookOn(void)			: "Look normally"	
+	input LookOff(void)			: "Don't look for myself, use other squad member's eyes"
+	input StartPatrolling(void)		: "Patrol whenever I'm idle or alert."
+	input StopPatrolling(void)		: "Stop patrolling when I'm idle or alert."
+	input ThrowGrenadeAtTarget(target_destination) : "Throw a grenade at the specified target."
+]
+
+
+@PointClass base(Targetname, Parentname, Targetname, EnableDisable) = env_gunfire : "Gunfire Effect"
+[
+	target(target_destination) : "Target" : "" : "Shoot at this target. REMEMBER - this is an effect only! It does not do damage!"
+
+	minburstsize(integer) : "Min Burst Size" : 2 : "Minimum number of rounds in a burst."
+	maxburstsize(integer) : "Max Burst Size" : 7 : "Maximum number of rounds in a burst."
+
+	minburstdelay(float) : "Min Delay Between Bursts" : 2 : "Minimum delay between bursts. (seconds)"
+	maxburstdelay(float) : "Max Delay Between Bursts" : 5 : "Maximum delay between bursts. (seconds)"
+
+	rateoffire(float) : "Rate of fire" : 10 : "Expressed as rounds per second"
+
+	spread(choices) : "Bullet spread" : 5 : "The 'cone of inaccuracy' of the shots fired by this entity." =
+	[
+		1 : "1 Degree"
+		5 : "5 Degrees"
+		10 : "10 Degrees"
+		15 : "15 Degrees"
+	]
+
+	bias(choices) : "Bullet distribution should be..." : 1 : "How to distribute bullets within the spread. Even distribution is a true scatter throughout the spread. Biased towards the outside makes the shots 'miss' the target by tending towards the outside of the spread." =
+	[
+		1 : "Evenly distributed"
+		-1 : "Biased towards the outside"
+	]
+
+	collisions(choices) : "Collision detection" : 0 : "Whether/how to handle bullet collision detection. NOTE: If you select NONE, this entity will be very cheap to use, but all bullets will stop short at their target's position in space and there will be no impact effects. Normal collision detection does the same things NPCs do when they fire their guns (except harm anything)." =
+	[
+		0 : "None. Cheap for performance."
+		1 : "Normal collision detection."
+	]
+
+	shootsound(choices) : "Shoot Sound" : "Weapon_AR2.NPC_Single" : "Gunfire sound to make" = 
+	[
+		"Weapon_AR2.NPC_Single"		: "AR2"
+		"Weapon_SMG1.NPC_Single"	: "SMG1"
+	]
+
+	tracertype(choices) : "Tracer" : "AR2TRACER" : "Type of tracer to display" = 
+	[
+		""		: "Default"
+		"AR2TRACER"	: "AR2"
+	]
+]
+
+@PointClass base(Targetname, Angles, Parentname) iconsprite("editor/info_target.vmt")  = info_target_gunshipcrash : "Gunship Crash Target"
+[
+	input Enable(void) : "Enable the crash target."
+	input Disable(void) : "Disable the crash target."
+]
+
+@PointClass base(Targetname, Parentname) iconsprite("editor/info_target_cyclopdeath.vmt") sphere(radius)  = info_target_cyclopedeath : "Cyclope Death Target"
+[
+	input Enable(void) : "Enable the crash target."
+	input Disable(void) : "Disable the crash target."
+	
+	SequenceDie(string) : "Die Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play when die."	
+	radius(float)	: "Radius Death"	:	0	: "Radius to allow cyclope to die."
+]
+
+@SolidClass base(Origin, Angles, Parentname) color(255 255 0) = npc_heli_avoidbox : "Helicopter avoidance box"
+[
+	spawnflags(Flags) = 
+	[
+		65536 :  "Avoid the box above and below"	: 0
+	]
+]
+
+@SolidClass base(Origin, Angles, Parentname) color(255 255 0) = npc_heli_nobomb : "Helicopter bombing suppressor"
+[
+]
+
+@PointClass base(Targetname, EnableDisable) sphere(LightRadius) = info_darknessmode_lightsource
+[
+	LightRadius(float) : "Light Radius" : "256.0" : "The radius around this lightsource in which Alyx will be able to see enemies."
+]
+
+@PointClass base(BaseNPC, RenderFields, Shadow) studio() = monster_generic : "Generic Script NPC"
+[
+	spawnflags(Flags) = 
+	[
+		65536 : "Not solid"	: 0
+	]
+	model(studio) : "Model"
+	body(Integer) : "Body" : 0
+]
+
+
+@PointClass base(BaseNPC, Parentname, RenderFields, Shadow) studio() = generic_actor : "Generic Actor NPC"
+[
+	model(studio) : "Model"
+
+	hull_name(choices) : "Hull type" : "Human" =
+	[
+		"HUMAN_HULL" : "Human"
+		"WIDE_HUMAN_HULL" : "Wide"
+		"TINY_HULL" : "Tiny"
+		"MEDIUM_HULL" : "Medium"
+		"LARGE_HULL" : "Large"
+	]
+]
+
+@PointClass base(BaseNPC, RenderFields, Shadow) studio() = cycler_actor : "Actor Cycler"
+[
+	model(studio) : "Model"
+	Sentence(string) : "Sentence Group" : ""
+
+	input Alpha(integer) : "Set Alpha Value"
+]
+
+@PointClass base(Angles, BaseNPCMaker) iconsprite("editor/npc_maker.vmt") = npc_maker : "NPC Maker"
+[
+	spawnflags(Flags) = 
+	[
+		16	: "Fade Corpse"		 : 0
+	]
+
+	NPCType(npcclass) : "Class name of spawned NPC"
+	NPCTargetname(string) : "Childrens' Name"
+	NPCSquadname(string) : "Childrens' Squad Name"
+	NPCHintGroup(string) : "Childrens' Hint Group"
+	
+	additionalequipment(choices) : "Weapons" : "0" =
+	[
+		"weapon_pistol"		: "Pistol"
+		"weapon_ar2"		: "AR2"
+		"weapon_shotgun"	: "Shotgun"
+		"weapon_smg1"		: "SMG1"
+		"weapon_stunstick"	: "Stun Stick"
+		"weapon_annabelle"	:"Grigori's Shotgun"
+		"0"			: "Nothing"
+	]
+]
+
+//-------------------------------------------------------------------------
+//
+// Player Control Entities
+//
+//-------------------------------------------------------------------------
+@BaseClass base(Targetname) size(-10 -10 -10, 10 10 10) color(255 0 255) = player_control
+[
+	// Inputs
+	input Activate(void)		: "Turns on"
+	input Deactivate(void)		: "Turns off"
+	input SetThrust(string)		: "Set Thrust"
+	input SetSideThrust(string)  : "Set Side Thrust"
+]
+
+ 
+//-------------------------------------------------------------------------
+//
+// Scripted Events
+//
+//-------------------------------------------------------------------------
+@BaseClass base(Targetname, Parentname, Angles) color(255 0 255) sphere(m_flRadius) = BaseScripted
+[
+	m_iszEntity(target_destination) : "Target NPC" : : "The name or class name (such as 'npc_zombie') of an NPC to use for this script."
+	m_iszIdle(string) : "Pre Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play before the action animation if the NPC must wait for the script to be triggered. Use 'Start on Spawn' flag or MoveToPosition input to play this idle animation."
+	m_iszEntry(string) : "Entry Animation" : "" : "The name of the sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play when the sequence starts, before transitioning to play the main action sequence."
+	m_iszPlay(string) : "Action Animation" : "" : "The name of the main sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play."
+	m_iszPostIdle(string) : "Post Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play after the action animation."
+	m_iszCustomMove(string) : "Custom Move Animation" : "" : "Used in conjunction with the 'Custom movement' setting for the 'Move to Position' property, specifies the sequence (such as 'crouch_run01') or activity (such as 'ACT_RUN') to use while moving to the scripted position."
+	m_iLoopActionSequence(integer) : "Loop Action Animation?" : 0 : "-1 : infinite, 0 or 1 : play once, 2 : play twice, ect."
+	
+	m_bSynchPostIdles(Choices) : "Synch Post Idles?" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	m_flRadius(integer) : "Search Radius (0=everywhere)" : 0 : "Radius to search within for an NPC to use. 0 searches everywhere."
+	m_flRepeat(integer) : "Repeat Rate ms" : 0
+	m_fMoveTo(Choices) : "Move to Position" : 1 =
+	[
+		0 : "No"
+		1 : "Walk"
+		2 : "Run"
+		3 : "Custom movement"
+		4 : "Instantaneous"
+		5 : "No - Turn to Face"
+		6 : "Custom movement around"
+	]
+	m_iszNextScript(target_destination) : "Next Script" : : "The name of the script to run immediately after this script completes. The NPC will not return to AI between the two scripts."
+
+	// Inputs
+	input BeginSequence(void) : "Summons an NPC to act out the scripted sequence."
+	input MoveToPosition(void) : "Summons an NPC to the script location. They will play their scripted idle (or ACT_IDLE if none is specified) until BeginSequence is triggered."
+	input CancelSequence(void) : "Stops the scripted sequence. If fired after a sequence starts, this input will not take effect until the NPC finishes playing the scripted action animation."
+	input StopActionLoop(void) : "Stops disable loop on action animation. Waits for the animation to end first."
+	
+	// Outputs
+	output OnBeginSequence(void) : "Fires when the action animation begins playing."
+	output OnCancelSequence(void) : "Fires when the action animation is canceled."
+	output OnEndSequence(void) : "Fires when the action animation completes."
+	output OnPostIdleEndSequence(void) : "Fires when the post idle animation completes."
+	output OnScriptEvent01(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 1 } in the QC."
+	output OnScriptEvent02(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 2 } in the QC."
+	output OnScriptEvent03(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 3 } in the QC."
+	output OnScriptEvent04(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 4 } in the QC."
+	output OnScriptEvent05(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 5 } in the QC."
+	output OnScriptEvent06(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 6 } in the QC."
+	output OnScriptEvent07(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 7 } in the QC."
+	output OnScriptEvent08(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 8 } in the QC."	
+	output OnReachedGoal(void) : "Fires when NPC arrive at the scripted sequence location."
+]
+
+
+@PointClass sphere() iconsprite("editor/scripted_sentence.vmt") base(Targetname) = scripted_sentence : "Scripted Sentence"
+[
+	spawnflags(Flags) = 
+	[
+		1 : "Fire Once" 	: 1
+		2 : "Followers Only"	: 0
+		4 : "Interrupt Speech"	: 1
+		8 : "Concurrent"	: 0
+		16 : "Speak to Activator" : 1
+	]
+
+	sentence(string) : "Sentence Name" : ""
+	entity(string) : "Speaker Type"
+	delay(string) : "Additional Sentence Time" : "0"
+	radius(integer) : "Search Radius" : 512
+	refire(string) : "Delay Before Refire" : "3"
+	listener(string) : "Listener Type"
+	volume(string) : "Volume 0-10" : "10"
+	attenuation(Choices) : "Sound Radius" : 0 =
+	[
+		0 : "Small Radius"
+		1 : "Medium Radius"
+		2 : "Large  Radius"
+		3 : "Play Everywhere"
+	]
+
+	// Inputs
+	input BeginSentence(void) : "Starts the scripted sentence."
+
+	// Outputs
+	output OnBeginSentence(void) : "Fires when the sentence begins"
+	output OnEndSentence(void) : "Fires when the sentence ends"
+]
+
+
+@PointClass base(Targetname, Parentname) iconsprite("editor/info_target.vmt")  = scripted_target : "Scripted Target"
+[
+	StartDisabled(choices) : "Start Disabled" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	m_iszEntity(npcclass)	: "Target NPC"
+	m_flRadius(integer) : "Search Radius (0=everywhere)" : 0 : "Radius to search within for an NPC to use. 0 searches everywhere."
+
+	MoveSpeed(integer)		: "Move Speed"			: 5		// How quickly should target move between scripted targets
+	PauseDuration(integer)	: "Pause Duration"		: 0		// How long should target pause at scripted target
+	EffectDuration(integer)	: "Effect Duration"		: 2		// How long should any associated effect last
+
+	target(target_destination) : "Next Target"				// Next scripted target
+
+	// Inputs
+	input Enable(void) : "Enable this entity"
+	input Disable(void) : "Disable this entity"
+
+	// outputs
+	output AtTarget(void)		: "Fires when NPC reaches this target"
+	output LeaveTarget(void)	: "Fires when NPC leaves this target"
+]
+
+@PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") sphere() = ai_relationship : "AI Relationship - Sets relationships between groups of NPCs in the AI."
+[
+	subject(target_name_or_class) : "Subject(s)" : "" : "This is the NPC(s) whose disposition will change. May be a targetname, a squadname or a classname."
+	target(target_name_or_class) : "Target(s)" : "" : "This is the NPC(s) about whom the Subject(s) will change their disposition. May be a targetname, a squadname  or a classname."
+	disposition(choices) : "Disposition" : 3 : "Choose the way the Subject(s) should feel about the Target(s)" =
+	[
+		// These MUST match the enum in the code! (basecombatcharacter.h)
+		1 : "Hate"
+		2 : "Fear"
+		3 : "Like"
+		4 : "Neutral"
+	]
+
+	radius(float) : "Radius for subject" : 0
+
+	rank(integer) : "Disposition Priority" : 0 : "How much the Subject(s) should Like/Hate/Fear the Target(s). Higher priority = stronger feeling."
+
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	Reciprocal(choices) : "Reciprocal" : 0 : "Set this to YES to have the new relationship mirrored by Target"  =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	spawnflags(flags) =
+	[
+		1 : "Notify subject of target's location" : 0
+		2 : "Notify target of subject's location" : 0
+	]
+	
+	// Inputs
+	input ApplyRelationship(void) : "Apply relationship changes. This will change all Subject entities' relationships to all Target entities. /n/nIMPORTANT: Once you ApplyRelationships, this entity is then 'ALWAYS ON' until you send a Disable input or RevertRelationship input. During the time this entity is 'ON', any entities that spawn who match the Subject or Target names will be affected. /n/nIMPORTANT: Unpredictable results may occur when two ai_relationship entities refer to the same set or subset of target or subject entities. This situation should be avoided."
+
+	input RevertRelationship(void) : "Revert relationship changes"
+]
+
+@PointClass base(Targetname) = ai_ally_manager : "AI Ally Manager"
+[
+	maxallies(integer) : "Maximum number of allies" : 5
+	maxmedics(integer) : "Maximum number of medics" : 1
+
+	// Inputs
+	input SetMaxAllies(integer) : "Set maximum number of allies"
+	input SetMaxMedics(integer) : "Set maximum number of medic allies"
+	input Replenish(void) : "Replenish player allies"
+
+	// Outputs
+	output SpawnMedicAlly(void) : "Spawn Medic Ally"
+	output SpawnAlly0(void) : "Spawn Ally 0"
+	output SpawnAlly1(void) : "Spawn Ally 1"
+	output SpawnAlly2(void) : "Spawn Ally 2"
+	output SpawnAlly3(void) : "Spawn Ally 3"
+	output SpawnAlly4(void) : "Spawn Ally 4"
+	output SpawnAlly5(void) : "Spawn Ally 5"
+	output SpawnAlly6(void) : "Spawn Ally 6"
+	output SpawnAlly7(void) : "Spawn Ally 7"
+	output SpawnAlly8(void) : "Spawn Ally 8"
+	output SpawnAlly9(void) : "Spawn Ally 9"
+
+	output OnZeroAllies(void) : "Fires when there are no more allies"
+	output OnZeroMedicAllies(void) : "Fires when there are no more allies"
+]
+
+@BaseClass base(Targetname) = LeadGoalBase
+[
+	actor(target_name_or_class) : "Actor(s) to affect"
+	goal(string) : "Target Entity"
+	WaitPointName(target_destination) : "Point to wait at if the target's not visible"
+	WaitDistance(float) : "Wait until player gets this close"
+	LeadDistance(float) : "Lead Distance" : "64" : "The player is considered to be lagging if he's beyond this distance.  The Actor will consider retrieving when the player is 4x 'Lead Distance' away."
+	RetrieveDistance(float) : "Retrieve Distance" : "96" : "The distance from the player that the NPC should return to when retrieving a lagging player. Must be between 'Lead Distance' and 4x 'Lead Distance' to avoid the leader ping-ponging."
+	Run(choices) : "Run instead of Walk" : "0" =
+	[
+		"0" : "No"
+		"1" : "Yes"
+	]
+
+	Retrieve(choices) : "Retrieve player?" : 1 =
+	[
+		0 : "No, just idle and wait"
+		1 : "Yes, move to retrieve"
+	]	
+	ComingBackWaitForSpeak(choices) : "Before Coming Back, Wait for speech?" : 1 =
+	[
+		0 : "No, come back while speaking"
+		1 : "Yes, wait for speech to finish"
+	]
+	RetrieveWaitForSpeak(choices) : "On Retrieve, Wait for speech?" : 1 =
+	[
+		0 : "No, start leading while speaking"
+		1 : "Yes, wait for speech to finish"
+	]
+	DontSpeakStart(choices) : "Speak start greeting?" : 0 =
+	[
+		0 : "Yes, speak the start greeting"
+		1 : "No, don't speak the greeting"
+	]
+	
+	AttractPlayerConceptModifier(string)	: "Attract player concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_ATTRACTPLAYER' concept is spoken."
+	WaitOverConceptModifier(string)		: "Player wait over concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_WAITOVER' concept is spoken."
+	ArrivalConceptModifier(string)		: "Arrival concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_ARRIVAL' concept is spoken."
+	PostArrivalConceptModifier(string)	: "Post-arrival concepts modifier"
+	SuccessConceptModifier(string)		: "Success concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_SUCCESS' concept is spoken."
+	FailureConceptModifier(string)		: "Failure concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'lead_fail' concept is spoken."
+	ComingBackConceptModifier(string)	: "Coming Back concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_RETRIEVE' concept is spoken. Spoken as the NPC starts returning to the player to retrieve him."
+	RetrieveConceptModifier(string)		: "Retrieve concept modifier" : "" : "Appended to the keyvalues passed into the response rules when the 'TLK_LEAD_COMINGBACK' concept is spoken. Spoken when NPC has finally reached the player to retrieve him."
+	
+	// Spawnflags
+	spawnflags(Flags) = 
+	[
+		1 : "No def success" : 0
+		2 : "No def failure" : 0
+		4 : "Use goal facing" : 1
+	]
+
+	// Inputs
+	input Activate( void ) 		: "Begin the leading Attitude"
+	input Deactivate( void ) 	: "Stop the leading Attitude"
+	
+	input SetSuccess( void )	: "Notify success of leading"
+	input SetFailure( void )	: "Notify failure of leading"
+	
+	// Outputs
+	output OnArrival( void )	: "Fires when NPC reaches the lead point"
+	output OnArrivalDone( void ) : "Fires when NPC has played out any arrival speech"
+	output OnSuccess( void )	: "Fires when NPC achieves the goal"
+	output OnFailure( void )	: "Fires when NPC fails to achieves the goal"
+	output OnDone( void )		: "Fires when NPC completes Attitude (any post-success or fail acting is complete)"
+]
+
+@PointClass base(LeadGoalBase) iconsprite("editor/ai_goal_lead.vmt") = ai_goal_lead : "AI Goal Lead"
+[
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+]
+
+@PointClass base(LeadGoalBase) iconsprite("editor/ai_goal_lead.vmt") = ai_goal_lead_weapon : "AI Goal Lead (Weapon). A version of the ai_goal_lead entity that requires the player to have the specified weapon before the Actor(s) will lead the player to their target."
+[
+	WeaponName(choices) : "Weapon" : "weapon_bugbait" =
+	[
+		"weapon_bugbait" : "Bugbait"
+		"weapon_smg1" : "SMG1"
+		"weapon_ar2"  : "AR2"
+	]
+
+	MissingWeaponConceptModifier(string)	: "Missing weapon concept modifier"
+	
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+]
+
+@BaseClass base(Targetname) = FollowGoal
+[
+	actor(target_name_or_class) : "Actor(s) to affect"
+	goal(string) : "Target Entity" : : "The name of the entity to follow. If blank, and the actor likes the player, then defaults to player"
+
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	MaximumState(choices) : "Maximum state" : 1 =
+	[
+		1 : "Idle"
+		2 : "Alert"
+		3 : "Combat"
+	]
+
+	Formation(choices) : "Formation" : 0 =
+	[
+		0 : "Close circle"
+		1 : "Wide circle"
+		5 : "Medium circle"
+	]
+
+	// Inputs
+	input Activate( void ) : "Begin the follow Attitude"
+	input Deactivate( void ) : "Cease the follow Attitude"
+]
+
+@PointClass base(FollowGoal) iconsprite("editor/ai_goal_follow.vmt") = ai_goal_follow : "AI Goal Follow"
+[
+	MoveType(choices):	"Movement type" : 0 =
+	[
+		0 : "Default"		
+		1 : "Custom Move"		
+	]
+	m_iszCustomMove(string) : "Custom Move Animation" : "" : "Used in conjunction with the 'Custom movement' setting for the 'Move to Position' property, specifies the sequence (such as 'crouch_run01') or activity (such as 'ACT_RUN') to use while moving to the scripted position."
+	
+	Wait(choices):	"Wait" : 0 =
+	[
+		0 : "Default"		
+		1 : "Custom Wait"		
+	]
+	m_iszWait(string) : "Custom Wait Animation" : "" : "Used in conjunction with the 'Wait' setting , specifies the sequence (such as 'wait1') or activity (such as 'ACT_READ_BOOK') to use while waiting."
+]
+
+@PointClass base(Targetname) iconsprite("editor/ai_goal_follow.vmt") = ai_goal_patrol : "AI Goal Patrol"
+[
+	actor(target_name_or_class) : "Actor(s) to affect"
+		
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	MaximumState(choices) : "Maximum state" : 1 =
+	[
+		1 : "Idle"
+		2 : "Alert"
+		3 : "Combat"
+	]
+
+	PatrolMode(choices):	"Patrol Modes" : 1 =
+	[
+		1 : "Idle"
+		2 : "Wander Around"
+		3 :	"Node to Node Cycling"
+		4 : "Node to Node Ping-Pong"
+	]
+
+	MoveType(choices):	"Movement type" : 1 =
+	[
+		1 : "Walk"
+		2 : "Run"	
+		3 : "Custom Move"		
+	]
+	m_iszCustomMove(string) : "Custom Move Animation" : "" : "Used in conjunction with the 'Custom movement' setting for the 'Move to Position' property, specifies the sequence (such as 'crouch_run01') or activity (such as 'ACT_RUN') to use while moving to the scripted position."
+
+	WanderRadius(float) : "Radius for wander state" : 400
+	
+	goal1(target_name_or_class) : "Node 1" : : "The Node to go first. For Wander State, this is the center of the circled area to wander."
+	goal2(target_name_or_class) : "Node 2" : : "Node to go"
+	goal3(target_name_or_class) : "Node 3" : : "Node to go"
+	goal4(target_name_or_class) : "Node 4" : : "Node to go"
+	goal5(target_name_or_class) : "Node 5" : : "Node to go"
+	goal6(target_name_or_class) : "Node 6" : : "Node to go"
+	goal7(target_name_or_class) : "Node 7" : : "Node to go"
+	goal8(target_name_or_class) : "Node 8" : : "Node to go"
+	goal9(target_name_or_class) : "Node 9" : : "Node to go"
+	goal10(target_name_or_class) : "Node 10" : : "Node to go"
+	goal11(target_name_or_class) : "Node 11" : : "Node to go"
+	goal12(target_name_or_class) : "Node 12" : : "Node to go"
+	goal13(target_name_or_class) : "Node 13" : : "Node to go"
+	goal14(target_name_or_class) : "Node 14" : : "Node to go"
+	goal15(target_name_or_class) : "Node 15" : : "Node to go"
+
+	// Inputs
+	input Activate( void ) : "Begin the patrol Attitude"
+	input Deactivate( void ) : "Cease the patrol Attitude"
+]
+
+@PointClass base(Targetname) iconsprite("editor/ai_goal_snipe.vmt") = ai_goal_snipe : "AI Goal Snipe"
+[
+	actor(target_name_or_class) : "Actor(s) to affect"
+		
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	MaximumState(choices) : "Maximum state" : 1 =
+	[
+		1 : "Idle"
+		2 : "Alert"
+		3 : "Combat"
+	]
+
+	Radius(float) : "Radius" : 200 : "Below this radius, the AI won't be in snipe mode"
+
+	// Inputs
+	input Activate( void ) : "Begin the patrol Attitude"
+	input Deactivate( void ) : "Cease the patrol Attitude"
+
+]
+@PointClass size( -4 -4 -4, 4 4 4 ) base(Targetname, Angles, Parentname) studio("models/pigeon.mdl") = ai_battle_line : "Battle line"
+[																									  
+	// Spawnflags
+	spawnflags(Flags) = 
+	[
+		1 : "Use parent's orientation" : 0
+	]
+
+	actor(target_name_or_class) : "Actor(s) or squad to affect"
+
+	Active(choices) : "Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	Strict(choices) : "Strict" : 1 : "Player orders can override, applies to allies only" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	input Activate(void)
+	input Deactivate(void)
+]
+
+@PointClass base(Targetname) iconsprite("editor/ai_goal_standoff.vmt") = ai_goal_standoff : "AI Goal Standoff"
+[
+	actor(target_name_or_class) : "Actor(s) to affect"
+//	goal(string) : "Target Entity (self by default) [NOT IMPLEMENTED]"
+
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	HintGroupChangeReaction(Choices) : "Reaction to tactical change" : 1 : "What to do if leader moves, threat is neutralized, hint group changes, etc" =
+	[
+		0 : "Move when ready (default AI)"
+		1 : "Move when seek cover"
+		2 : "Move immediately"
+	]
+
+	Aggressiveness(Choices) : "Aggressiveness" : 2 =
+	[
+		0 : "Very low"
+		1 : "Low"
+		2 : "Medium"
+		3 : "High"
+		4 : "Very High"
+		// Custom agression disabled
+		// 		100 : "Custom"
+	]
+
+	PlayerBattleline(choices) : "Player battleline" : 1 : "Player defines a battle line, applies to allies only" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	StayAtCover(choices) : "Stay at cover location" : 0 : "When have suitable cover, don't change it (disables advancing to battle line)" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	AbandonIfEnemyHides(choices) : "Abandon if enemies hide" : 0 : "If no enemy detected recently, stop the standoff" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Custom aggression
+//	CustomCoverOnReload(choices)	: "Custom: Take cover to reload" : 1 =
+//	[
+//		0 : "No"
+//		1 : "Yes"
+//	]
+//	CustomMinTimeShots(float)		: "Custom: Min time wait to shoot"	  : 2 : "Minimum duration of time after a burst of shooting before trying again"
+//	CustomMaxTimeShots(float)		: "Custom: Max time wait to shoot"	  : 4 : "Minimum duration of time after a burst of shooting before trying again"
+//	CustomMinShots(integer)			: "Custom: Min shots in a burst"	  : 1
+//	CustomMaxShots(integer)			: "Custom: Max shots in a burst"	  : 4
+//	CustomOddsCover(integer)		: "Custom: Odds cover on damage"	  : 25 : "If damaged, the chances react by taking immediate cover"
+
+	// Inputs
+	input Activate( void ) : "Begin contesting position"
+	input Deactivate( void ) : "Cease contesting position"
+	input SetAggressiveness(integer) : "Set aggressiveness"
+]
+
+@PointClass base(Targetname, Parentname, Angles) sphere(policeradius) iconsprite("editor/ai_goal_police.vmt") = ai_goal_police : "AI Goal Police"
+[
+	spawnflags(Flags) = 
+	[
+		2 : "Knock-out target past crossing plane"	: 0
+		4 : "Do not leave post" : 0
+	]
+
+	policeradius(float) : "Radius" : 512 : "Radius to police"
+	policetarget(string) : "Target" : "" : "Target to police"
+
+	input EnableKnockOut(void) : "Tells the goal to make the active policing NPC knock out its target"
+	input DisableKnockOut(void) : "Stop the active policing NPC from trying to knock out its target"
+
+	output OnFirstWarning(void) : "Fires the first time a policing cop warns a target"
+	output OnSecondWarning(void) : "Fires the second time a policing cop warns a target"
+	output OnLastWarning(void) : "Fires when a policing cop warns a target for the last time"
+	output OnSupressingTarget(void) : "Fires when a policing cop starts to suppress (ie. beat) a target"
+	output OnKnockOut(void) : "Fires when a target has been knocked out"
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/assault_rally.vmt") line(255 255 255, targetname, assaultpoint) = assault_rallypoint : "(Assault) rally point"
+[
+	assaultpoint(target_destination) 	: "Assault Point" : "" : "Location to move to as assault begins"
+	assaultdelay(float)		: "Assault Delay" : 0 : "How long to wait after cue is given before assault begins."
+	rallysequence(string)	: "Rally Sequence" : "" : "Override the NPC's wait activity by entering a sequence name."
+	priority(integer)		: "Priority" : 1 : "Higher priority rally points get selected first."
+
+	output OnArrival(void)	: "Fires when the NPC reaches this rally point"
+
+	spawnflags(Flags) = 
+	[		
+		2 : "Don't Face on arrival"								: 1
+	]
+
+	movespeed(choices) : "Move speed" : 0 : "How to reach this point" =
+	[
+		0 : "Run"
+		1 : "Walk"
+	]
+
+]
+
+@PointClass base(Targetname, Parentname, Angles) iconsprite("editor/assault_point.vmt") line(255 255 255, targetname, nextassaultpoint) = assault_assaultpoint : "(Assault) assault point"
+[
+	assaultgroup(string) 	: "Assault Hint Group" : "" : "NPC's movements are constrained to this hint group once assault has begun"
+	nextassaultpoint(target_destination) : "Next assault point (optional)"
+	assaulttimeout(float)	: "Assault time out" : "3.0" : "This point is cleared when no enemies are seen for this long (seconds)"
+	clearoncontact(choices) : "Clear on contact with enemies" : 0 : "If you come in contact with enemies while approaching the assault point, clear our assault point" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	allowdiversion(choices) : "Allow diversion" : 0 : "If you come in contact with enemies while approaching the assault point, divert to kill them. Resume the assault once contact is lost." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	nevertimeout(choices) : "Never Timeout" : 0 : "If set, the assault never ends for NPCs assaulting this point. Useful for forcing NPCs back to a point." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	spawnflags(Flags) = 
+	[
+		1 : "Clear this point upon arrival, UNCONDITIONALLY"	: 0
+		2 : "Don't Face on arrival"								: 1
+	]
+
+	movespeed(choices) : "Move speed" : 0 : "How to reach this point" =
+	[
+		0 : "Run"
+		1 : "Walk"
+	]
+
+	// Inputs
+	input SetClearOnContact(integer) : "Set the clear on contact flag."
+	input SetAllowDiversion(integer) : "Set the allow diversion flag."
+
+	// Outputs
+	output OnArrival(void)	: "Fires when the NPC reaches this assault point"
+	output OnAssaultClear(void)	: "Fires when this assault point is cleared of enemies"
+]
+
+@PointClass base(Targetname) = ai_goal_assault : "AI Goal Assault"
+[
+	actor(target_name_or_class)		: "Actor(s) to affect" : "" : "NPC's that should perform this assault"
+	rallypoint(target_destination)	: "Rally Point Set" : "" : "Root name of rally points for this assault. Use an asterisk '*' after the root name to match all with the same root."
+
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	AssaultCue(choices) : "Assault Cue" : 1 =
+	[
+		1 : "Entity System Input"
+		2 : "Gunfire"
+		3 : "Don't wait for a cue."
+	]
+
+	RallySelectMethod(choices) : "Rally Point Selection Method" : 0 = 
+	[
+		0 : "Priority, Distance (default)"
+		1 : "Random"
+	]
+
+
+	// Inputs
+	input Activate( void ) : "Begin the assault Attitude"
+	input Deactivate( void ) : "Cease the assault Attitude"
+	input BeginAssault( void ) : "Begin assault phase"
+]
+
+@BaseClass base(Targetname) = BaseActBusy
+[
+	actor(target_name_or_class)	: "Actor(s) to affect" : "" : "NPC's that should act busy"
+
+	StartActive(choices) : "Start Active" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+
+	busysearchrange(float) : "Search Range for Busy Hints" : 2048
+	visibleonly(choices) : "Visible Busy Hints Only" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Inputs
+	input Activate( void ) : "Begin acting busy"
+	input Deactivate( void ) : "Cease acting busy"
+	input SetBusySearchRange( float ) : "Update the busy search range for all actors."
+	input ForceNPCToActBusy( string ) : "Force an NPC to act busy. Takes parameters, separated by spaces: <Targetname> <hint node targetname> <optional:teleport> <optional:$customactivityorsequence> <maximum time to actbusy>. If no hint node targetname is specified, it'll search for a random one. If no max time is specified, it'll use the default. Specifying 0 as the max time will make the NPC act busy until disturbed. If the optional teleport parameter is specified, the NPC will teleport to the act busy point. A custom move animation can be specified by prepending $ to the name of it. i.e. $ACT_RUN will make the NPC Run. Sequence names can be used instead of activities."
+	input ForceThisNPCToActBusy( string ) : "Force an NPC outputted from another entity to act busy. (only usable from an output that specifies an entity)"
+	input ForceThisNPCToLeave( string ) : "Force an NPC outputted from another entity to find a HINT_NPC_EXIT_POINT hintnode and vanish."
+
+	// Outputs
+	output OnNPCStartedBusy(string) : "Fired when an NPC targeted by this goal starts an ActBusy animation."
+	output OnNPCFinishedBusy(string) : "Fired when an NPC targeted by this goal finishes an ActBusy."
+	output OnNPCLeft(string) : "Fired when an NPC target by this goal finishes a forced Leave."
+]
+
+@PointClass base(BaseActBusy) = ai_goal_actbusy : "AI Goal Act Busy"
+[
+]
+
+@PointClass base(BaseActBusy) = ai_goal_actbusy_queue : "AI Goal Act Busy Queue"
+[
+	node_exit(target_destination) : "Exit Node" : "" : "The name of the node the first NPC in the queue should move to when he leaves the head of the queue."
+	node01(target_destination) : "Node 1" : "" : "The name of the first actbusy hint node in the queue."
+	node02(target_destination) : "Node 2" : "" : "The name of the second actbusy hint node in the queue."
+	node03(target_destination) : "Node 3" : "" : "The name of the third actbusy hint node in the queue."
+	node04(target_destination) : "Node 4" : "" : "The name of the fourth actbusy hint node in the queue."
+	node05(target_destination) : "Node 5" : "" : "The name of the fifth actbusy hint node in the queue."
+	node06(target_destination) : "Node 6" : "" : "The name of the sixth actbusy hint node in the queue."
+	node07(target_destination) : "Node 7" : "" : "The name of the seventh actbusy hint node in the queue."
+	node08(target_destination) : "Node 8" : "" : "The name of the eighth actbusy hint node in the queue."
+	node09(target_destination) : "Node 9" : "" : "The name of the ninth actbusy hint node in the queue."
+	node10(target_destination) : "Node 10" : "" : "The name of the tenth actbusy hint node in the queue."
+	node11(target_destination) : "Node 11" : "" : "The name of the eleventh actbusy hint node in the queue."
+	node12(target_destination) : "Node 12" : "" : "The name of the twelfth actbusy hint node in the queue."
+	node13(target_destination) : "Node 13" : "" : "The name of the thirteenth actbusy hint node in the queue."
+	node14(target_destination) : "Node 14" : "" : "The name of the fourteenth actbusy hint node in the queue."
+	node15(target_destination) : "Node 15" : "" : "The name of the fifteenth actbusy hint node in the queue."
+	node16(target_destination) : "Node 16" : "" : "The name of the sixteenth actbusy hint node in the queue."
+	node17(target_destination) : "Node 17" : "" : "The name of the seventeenth actbusy hint node in the queue."
+	node18(target_destination) : "Node 18" : "" : "The name of the eighteenth actbusy hint node in the queue."
+	node19(target_destination) : "Node 19" : "" : "The name of the nineteenth actbusy hint node in the queue."
+	node20(target_destination) : "Node 20" : "" : "The name of the twentieth actbusy hint node in the queue."
+	 
+	mustreachfront(choices) : "Must Reach Front" : 0 : "If true, NPCs much reach the front node in the queue before they're allowed to leave the queue." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Inputs
+	input PlayerStartedBlocking(float) : "Tell the queue manager that the player has started blocking a spot in the queue."
+	input PlayerStoppedBlocking(float) : "Tell the queue manager that the player has stopped blocking a spot in the queue."
+	input MoveQueueUp(void) : "Force the queue to move up, sending the front-most NPC out of the queue."
+
+	// Outputs
+	output OnQueueMoved(float) : "Fired when the queue moves. Outputs the number of NPCs left in the queue."
+	output OnNPCStartedLeavingQueue(string) : "Fired when the NPC at the head of the queue starts to leave. The activator is the NPC, and the string is the name of the NPC."
+	output OnNPCLeftQueue(string) : "Fired when the NPC at the head of the queue leaves. The activator is the NPC, and the string is the name of the NPC."
+]
+
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) = ai_changetarget : "Change Target"
+[
+	target(target_destination) : "Target entity" : : "Name of entity whose target will be changed."
+	m_iszNewTarget(string) : "New Target"
+
+	input Kill( void ) : "Removes this entity from the world"
+	input Activate( void ) : "Changes the entities target"
+]
+
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) = ai_npc_eventresponsesystem : "An entity that allows you to generate events for nearby friendly NPCs to respond to."
+[
+	input TriggerResponseEvent(string) : "Fire an NPC Response Event. The parameter should match the response rules concept that any nearby friendly NPCs will try to speak."
+	input ForceTriggerResponseEvent(string) : "Fire an NPC Response Event, and force the first available NPC to speak the response (breaking them out of any scene they're in). The parameter should match the response rules concept that any nearby friendly NPCs will try to speak."
+]
+
+@PointClass base(Targetname) sphere(Radius)  size(-8 -8 -8, 8 8 8) = ai_changehintgroup : "Change Hint Group"
+[
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities to change." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+		2 : "Old Hint Group"
+	] 
+	SearchName(string) : "Name to search for"
+	NewHintGroup(string) : "New Hint Group"
+	Radius(string) : "Search Radius" : "0.0" : "Radius to search (0 for all of map)"
+	hintlimiting(choices) : "Hint Limit Nav" : 0 : "Limits NPC to using specified hint group for navigation requests, does not limit local navigation." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	input Kill( void ) : "Removes this entity from the world"
+	input Activate( void ) : "Change the Hint Group"
+]
+
+
+
+@PointClass base(Targetname) = ai_script_conditions : "AI Script Conditions"
+[
+	Actor(target_destination) : "Actor" : : "NPC Target"
+	
+	StartDisabled(choices) : "Start Disabled" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	MinimumState(choices) : "Minimum state" : 1 =
+	[
+		1 : "Idle"
+		2 : "Alert"
+		3 : "Combat"
+	]
+
+	MaximumState(choices) : "Maximum state" : 3 =
+	[
+		1 : "Idle"
+		2 : "Alert"
+		3 : "Combat"
+	]
+	
+	ScriptStatus(choices) : "Actor is running a script?" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+		
+	RequiredTime(float)		: "Required Time"	  : 0 : "Duration of time that all the conditions must be true"
+	MinTimeout(float)		: "Minimum time out"  : 0 : "Minimum time before OnConditionsTimeout is fired. 0 = never expire"
+	MaxTimeout(float)		: "Maximum time out"  : 0 : "Maximum time before OnConditionsTimeout is fired. 0 = ignore"
+	
+	ActorSeePlayer(choices) : "Actor Sees Player" : 2 =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+
+	PlayerActorProximity(float)	: "Player distance" 	 : 0 : "The distance the player must/must not be to the actor. Negative values for NOT, 0 for ignore."
+	PlayerActorFOV(float)		: "Player FOV for Actor " : 360 : "Specify angle of view cone in degrees. Negative value = NOT"
+	PlayerActorFOVTrueCone(choices ) : "Play FOV to Actor is a true view cone" : 0 : "Player's view cone is evaluated as a true cone, not pie slice " = 
+	[
+		0 : "No - Tall pie slice"
+		1 : "Yes - True view cone"
+	]
+
+	PlayerActorLOS(choices)		: "Player has LOS to Actor" : 2 : "Checks that the player has clear Line of Sight to the Actor" =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+
+
+	target(target_destination)	: "Target (Optional)" : : "Optional entity to include in conditions"
+	ActorSeeTarget(choices) 	: "Actor Sees Target" : 2 =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+
+	ActorTargetProximity(float)		: "Target distance" 	 : 0 : "The distance the actor must/must not be to the Target. Negative values for NOT, 0 for ignore."
+	PlayerTargetProximity(float)	: "Player distance from Target" 	 : 0 : "The distance the player must/must not be to the Target. Negative values for NOT, 0 for ignore."
+	PlayerTargetFOV(float)			: "Player FOV for Target" : 360 : "Specify angle of view cone in degrees. Negative value = NOT"
+	PlayerTargetFOVTrueCone(choices ) : "Play FOV to Target is a true view cone" : 0 : "Player's view cone is evaluated as a true cone, not pie slice " = 
+	[
+		0 : "No - Tall pie slice"
+		1 : "Yes - True view cone"
+	]
+
+	PlayerTargetLOS(choices)		: "Player has LOS to Target" : 2 : "Checks that the player has clear Line of Sight to the Target" =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+	
+	PlayerBlockingActor(choices)	: "Player blocking Actor" : 2 : "Checks that the player is blocking the Actor's path" =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+
+	ActorInPVS(choices)	: "Actor in Player's PVS" : 2 : "Checks that the actor is in the player's PVS" =
+	[
+		0 : "No"
+		1 : "Yes"
+		2 : "Don't care"
+	]
+
+	spawnflags(Flags) = 
+	[
+		1 : "Fire outputs with the Actor as Activator"	: 0
+	]
+
+	
+	// Outputs
+	output OnConditionsSatisfied(void) : "Fires when AI conditions satisfied"
+	output OnConditionsTimeout(void)   : "Fires when AI conditions timed out"
+
+	// Inputs
+	input Enable(void) : "Enable this entity"
+	input Disable(void) : "Disable this entity"
+]
+
+@PointClass base(BaseScripted, Angles, DXLevelChoice) studio("models/editor/scriptedsequence.mdl") sphere(m_flRadius) = scripted_sequence :
+	"Grabs an NPC and makes them play a specified set of animations. The NPC can be told to move to the scripted sequence position or can "+
+	"be told to play the script wherever they currently are. "+
+	"Multiple scripted sequences of the same name will frame-synchronize in the action animation once all the actors have moved to position. "+
+	"This allows tight interaction between actors (one actor grabbing another, hitting them, etc.) The flow is as follows:/n/n"+
+	"1) Move to position using the specified movement animation. If 'Move to Position' is set to NONE, skip to step 2./n"+
+	"2) If forced to wait for another actor to move to position, play the pre-action idle animation, otherwise skip to step 3. If there is no pre-action idle specified, ACT_IDLE is used./n"+
+	"3) Fire the OnBeginSequence output./n"+
+	"4) Play the action animation. If no action animation is specified, skip to step 5./n"+
+	"5) Play the post-action idle animation. If none is specified, skip to step 6. If the 'Loop in Post Idle' spawnflag is set, keep playing the post-action idle until the script is cancelled. If no post-action idle animation is specified, ACT_IDLE is used./n"+
+	"6) Fire the OnEndSequence output./n"+
+	"7) If a next script to play is specified, hand the NPC to the next script and repeat this process for that script./n/n"+
+	"The MoveToPosition input runs steps 1 and 2, then waits while playing the pre-action idle animation until the BeginSequence input is received."
+[
+	spawnflags(Flags) = 
+	[
+		4 : "Repeatable"	: 0
+		8 : "Leave Corpse"	: 0
+		16 : "Start on Spawn" : 0
+		32: "No AI Interruptions"	: 0
+		64: "Override AI state on launch"	: 0
+		128: "No Script Movement" : 0
+		256: "Loop in Post Idle" : 0
+		512: "Priority Script" : 0
+		4096 : "Fly : disable gravity (always ON by default at Valve )" : 0 
+		8192 : "Don't cancel other sequences with the same name" : 0
+	]
+	
+	interruptability(choices) : "Interruptability" : 0 : "Interruptability (scriptedsequence must not have No AI Interruptions or Fly spawnflags to use it)" =
+ 	[
+ 		0 : "General"
+ 		1 : "Damage or Death"
+ 		2 : "Death"
+ 	]
+]
+
+
+@PointClass base(Targetname) sphere(m_flRadius) color(255 0 255) iconsprite("editor/aiscripted_schedule") = aiscripted_schedule :
+	"Issues a command to an NPC without taking the NPC out of its AI. This does not seize control of the NPC as " +
+	"a scripted_sequence does" 
+[
+	m_iszEntity(target_destination) : "Target NPC" : : "The name or classname of an NPC to use."
+	m_flRadius(integer) : "Search Radius (0=everywhere)" : 0 : "Radius to search within for an NPC to use. 0 searches everywhere."
+
+	graball(choices) 	: "All in radius" : 0: "Whether to grab all matching NPCs in the specified radius, instead of just one"  =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	spawnflags(Flags) = 
+	[
+		4 : "Repeatable" : 0
+		1024 : "Search Cyclically" : 0
+		2048 : "Don't Complain" : 0
+	]
+
+	forcestate(choices) : "AI state to set" : 0 =
+	[
+		0 : "<None>"
+		1 : "Set state to IDLE"
+		2 : "Set state to ALERT"
+		3 : "Set state to COMBAT"
+	]
+		
+	schedule(choices) : "Schedule to run" : 1 =
+	[
+		0 : "<None>"
+		1 : "Walk to Goal Entity"
+		2 : "Run to Goal Entity"
+		3 : "Set enemy to Goal Entity"
+		4 : "Walk Goal Path"
+		5 : "Run Goal Path"
+		6 : "Set enemy to Goal Entity AND Run to Goal Entity"
+		7 : "Flee to Goal Entity"
+		8 : "Flee Goal Path"
+		9 : "Open door Goal Entity"
+		10 : "Close door Goal Entity"
+	]
+	
+	interruptability(choices) : "Interruptability" : 0 =
+	[
+		0 : "General"
+		1 : "Damage or Death"
+		2 : "Death"
+	]
+
+	goalent(target_destination) : "Goal entity" : : "Provides the name of a schedule-specific goal entity (see 'Schedule to run')"
+
+	input StartSchedule(void) : "Starts the scripted schedule. This will first locate an NPC that " +
+		"matches the given target, then tell the NPC to run the specified schedule."
+	
+	input StopSchedule(void) : "Stop the scripted schedule. If flag grab_all set, all the npcs stop it."
+	
+	output OnEndScriptedSchedule(void) : "Fired when the selected npc finish his scripted schedule."
+]
+
+//-------------------------------------------------------------------------
+//
+// Solid Entities
+//
+//-------------------------------------------------------------------------
+@SolidClass base(EnableDisable, Parentname, Origin, Global) = func_healthcharger: "Wall health recharger" 
+[
+	// dmdelay(integer) : "Deathmatch recharge delay" : 0
+	_minlight(string) : "Minimum light level"
+
+	output OutRemainingHealth(float) : "Remaining Health."
+	output OnPlayerUse(void) : "Fired when the player +USEs the charger."
+]
+
+//-------------------------------------------------------------------------
+//
+// Solid Entities
+//
+//-------------------------------------------------------------------------
+@SolidClass base(EnableDisable, Parentname, Origin, Global) = func_healthcharger: "Wall health recharger" 
+[
+	// dmdelay(integer) : "Deathmatch recharge delay" : 0
+	_minlight(string) : "Minimum light level"
+
+	output OutRemainingHealth(float) : "Remaining Health."
+	output OnPlayerUse(void) : "Fired when the player +USEs the charger."
+]
+
+@SolidClass base(Targetname, Parentname, Origin) = func_recharge: "Battery recharger" 
+[
+	// dmdelay(integer) : "Deathmatch recharge delay" : 0
+	_minlight(string) : "Minimum light level"
+
+	spawnflags(flags) =
+	[
+		8192  : "Citadel recharger" : 0
+	]
+
+	input Recharge(void) : "Recharge to full"
+
+	output OutRemainingCharge(float) : "Remaining Charge."
+	output OnHalfEmpty(void) : "Half-Empty"
+	output OnEmpty(void) : "Empty"
+	output OnFull(void) : "Recharged to full."
+	output OnPlayerUse(void) : "Fired when the player +USEs the charger."
+]
+
+@SolidClass base(Parentname, Origin, Global) = func_extinguishercharger: "Wall fire extinguisher recharger" 
+[
+	_minlight(string) : "Minimum light level"
+]
+
+@SolidClass base(Parentname, Targetname, Global) = func_vehicleclip: "Vehicle Clip" 
+[
+	input Kill( void ) : "Removes this entity from the world"
+]
+
+@SolidClass base(func_movelinear) = func_lookdoor : "A door that moves either when looked by a targeted object or when " +
+	"a target object comes near the door.  Attitude can be either based on viewing direction or proximity " +
+	"alone, or on a combination of both.  If inverted the doors Attitude will be the opposite." 
+[
+	spawnflags(flags) =
+	[
+		8192  : "LookDoor Threshold" : 0
+		16384 : "LookDoor Invert"	 : 0
+		32768 : "LookDoor From Open" : 0
+	]
+
+	ProximityDistance(string)		: "Proximity Distance"		: "0.0"  : "If non-zero, proximity range over which door will move"
+	ProximityOffset(string)			: "Proximity Offset"		: "0.0"	 : "Offset from the target object"
+	FieldOfView(string)				: "FieldOfView"				: "0.0"  : "If non-zero, field of view over which door will move"
+
+	// Input
+	input InvertOn(void)		: "InvertOn - when set Attitude of door is inverted."
+	input InvertOff(void)		: "InvertOff - when set Attitude of door is normal."
+]
+
+@SolidClass base(Trigger) = trigger_waterydeath: 
+	"A trigger volume that spawns leeches around entities inside it, and does damage to them until they die. "+
+	"Used to prevent players entering deep water."
+[
+]
+
+//-------------------------------------------------------------------------
+//
+// Point Entities
+//
+//-------------------------------------------------------------------------
+
+@PointClass base(EnvGlobal) size(-8 -8 -8, 8 8 8) = env_global : 
+	"An entity to control a game-specific global states."
+[
+	globalstate(choices) : "Global State to Set" =
+	[
+		"gordon_precriminal" : "Gordon pre-criminal" 
+		"antlion_allied" : "Antlions are player allies" 
+//		"player_stealth" : "Player in APC is disguised as combine" 
+		"suit_no_sprint" : "Suit sprint function not yet enabled" 
+		"super_phys_gun" : "Super phys gun is enabled" 
+		"friendly_encounter" : "Friendly encounter sequence (lower weapons, etc.)"
+//		"citizens_passive" : "Citizens are *not* player allies (cannot be commanded)"
+		"gordon_invulnerable" : "Gordon is invulnerable"
+		"no_seagulls_on_jeep" : "Don't spawn seagulls on the jeep"
+	]
+]
+
+//-------------------------------------------------------------------------
+//
+// Tanks
+//
+//-------------------------------------------------------------------------
+@BaseClass base(Targetname, Parentname, Origin, Angles, RenderFields, Global, Shadow) = BaseTank
+[
+	spawnflags(flags) =
+	[
+		1 : "Active" : 0
+		16: "Only Direct" : 0
+		32: "Controllable" : 0
+		64: "Damage Kick" : 0
+	      1024: "NPC Controllable" : 0
+              2048: "NPC Set Controller" : 0
+	      4096: "Allow friendlies to hit player" : 0
+	     32768: "Non-solid." : 0
+	    131072: "Cheat when shooting player" : 0
+	]
+
+	control_volume(target_destination) : "Control Volume" : "" : "Name of a trigger the specifies the volume in which a player must be to control this tank."
+
+	// Mainly for use with 1009 team settings (game_team_master)
+	master(string) : "(Team) Master" 
+
+	yawrate(string) : "Yaw rate" : "30"
+	yawrange(string) : "Yaw range" : "180"
+	yawtolerance(string) : "Yaw tolerance" : "15"
+	pitchrate(string) : "Pitch rate" : "0"
+	pitchrange(string) : "Pitch range" : "0"
+	pitchtolerance(string) : "Pitch tolerance" : "5"
+	barrel(string) : "Barrel Length" : "0"
+	barrely(string) : "Barrel Horizontal" : "0"
+	barrelz(string) : "Barrel Vertical" : "0"
+	spritesmoke(sprite) : "Smoke Sprite" : ""
+	spriteflash(sprite) : "Flash Sprite" : ""
+	spritescale(string) : "Sprite scale" : "1"
+	rotatestartsound(sound) : "Rotate Start Sound" : ""
+	rotatesound(sound) : "Rotate Loop Sound" : ""
+	rotatestopsound(sound) : "Rotate Stop Sound" : ""
+	firerate(string) : "Rate of Fire" : "1"
+	bullet_damage(string) : "Damage Per Bullet" : "0" : "If set to 0, it'll use the base weapon bullet's damage."
+	bullet_damage_vs_player(string) : "Damage Per Bullet Vs Player" : "0" : "If set to 0, it'll use the Damage Per Bullet value."
+	persistence(string) : "Firing persistence" : "1" : "(Seconds) How long to keep firing at last known position after lose sight of target"
+	persistence2(string) : "Firing persistence2" : "0" : "(Seconds) After lost enemy and persistence time has passed, how long to occasionally fire at enemy's last known position"
+	firespread(choices) : "Bullet accuracy" : 0 =
+	[
+		0: "Perfect Shot"
+		1: "Small cone"
+		2: "Medium cone"
+		3: "Large cone"
+		4: "Extra-large cone"
+	]
+	minRange(string) : "Minmum target range" : "0"
+	maxRange(string) : "Maximum target range" : "0"
+	_minlight(string) : "Minimum light level"
+
+	gun_base_attach(string) : "Gun Base Attachment" : "" : "If Parent is specified, this is the attachment point on the parent to aim from."
+	gun_barrel_attach(string) : "Gun Barrel Attachment" : "" : "If Parent is specified, this is the attachment point on the parent to fire from. If you specify this, you'll want to specify the Gun Base Attachment too."
+	gun_yaw_pose_param(string) : "Gun Yaw Pose Param" : "" : "If Parent + the Gun Pitch Pose Param is specified, then the gun itself will be invisible and the func_tank will steer a gun on the parent using the pose parameters."
+	gun_yaw_pose_center(float) : "Gun Yaw Pose Center" : "0" : "The center yaw pose parameter of the gun on the parent"
+	gun_pitch_pose_param(string) : "Gun Pitch Pose Param" : "" : "If Parent + the Gun Yaw Pose Param is specified, then the gun itself will be invisible and the func_tank will steer a gun on the parent using the pose parameters."
+	gun_pitch_pose_center(float) : "Gun Pitch Pose Center" : "0" : "The center pitch pose parameter of the gun on the parent"
+
+	ammo_count(integer) : "Ammunition Count" : -1 : "Only applies to player use. -1 = unlimited ammo."
+
+	LeadTarget(choices) : "Lead Target" : "No" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	npc_man_point(target_destination) : "NPC Man Point" : "" : "Point where NPC must stand to man this func_tank."
+	playergraceperiod(float) : "Post-NPC Attack Grace Period" : "0" : "If specified, NPC's manning this func tank won't fire at the player, after firing at a non-player, for this amount of time."
+	ignoregraceupto(float) : "Ignore Grace Upto" : "768" : "The player grace period is ignored if the player's under this distance from the func_tank."
+	playerlocktimebeforefire(float) : "Player Lock Time" : "0" : "The tank must have the player as a target for this amount of time before it's allowed to fire."
+
+	effecthandling(choices) : "Effect Handling" : 0 =
+	[
+		0 : "Use Individual Settings."
+		1 : "AR2"
+		2 : "Combine Cannon"
+	]
+
+	associated_model(target_destination) : "associated model" : : ""
+	associated_env_shooter(target_destination) : "associated env_shooter" : : ""
+
+	// input
+	input Activate(void)				: "Turn the tank on"
+	input Deactivate(void)				: "Turn the tank off (go dormant)"
+	input SetFireRate(string)			: "How fast to fire (0 = don't fire)"
+	input SetDamage(string)				: "Set the Damage Per Bullet"
+	input SetTargetPosition(string)		: "World position that I should aim at"
+	input SetTargetDir(vector)			: "Direction to aim at."
+	input SetTargetEntityName(string)	: "Name of entity I should follow/attack"
+	input SetTargetEntity(string)		: "Entity I should follow/attack (output from other entity only)"
+	input ClearTargetEntity(void)		: "Clear the entity I should be attacking."
+	input FindNPCToManTank(string)		: "Find a nearby NPC to man this func_tank."
+	input StartFindingNPCs(void)		: "Start searching for NPCs to man this func_tank."
+	input StopFindingNPCs(void)		: "Stop searching for NPCs to man this func_tank."
+	input ForceNPCOff(void)			: "Force the NPC manning this func_tank (if any) to leave."
+	input SetMaxRange(float)		: "Set the max range of the func_tank."
+
+	output OnFire(void)				: "Fires when the tank fires its bullets"
+	output OnAquireTarget(void)		: "Fires when target is newly in range and can be shot"
+	output OnLoseTarget(void)		: "Fires when when target goes out of range"
+	output OnAmmoDepleted(void)		: "Fires when tank runs out of ammo"
+	output OnGotController(void)	: "Fires when an NPC starts to control this tank. Players do NOT fire this input."
+	output OnLostController(void)	: "Fires when the NPC controller of the tank stops controlling it. Players do NOT fire this input."
+	output OnGotPlayerController(void)	: "Fires when a Player starts to control this tank. NPCs do NOT fire this input."
+	output OnLostPlayerController(void)	: "Fires when the Player controller of the tank stops controlling it. NPCs do NOT fire this input."
+	output OnReadyToFire(void) : "Fires once when the tank is done waiting to fire between rounds"
+]
+
+
+// dvs: FIXME: put this back once we have an episodic FGD
+//@SolidClass base(BaseTank) = func_tank : "Brush Gun Turret" 
+//[
+//	bullet(choices) : "Bullets" : 0 = 
+//	[
+//		0: "None"
+//		1: "Pistol"
+//		2: "SMG1"
+//		3: "AR2"
+//		4: "Laser"
+//	]
+//
+//	spawnflags(flags) =
+//	[
+//		8192: "Ignore range when making viewcone checks" : 0
+//		256 : "Aiming Assistance (Player Only)" : 0
+//	]
+//]
+
+
+// dvs: FIXME: move into an episodic FGD
+@SolidClass base(BaseTank) = func_tank : "Brush Gun Turret" 
+[
+	ammotype(choices) : "Ammo type" : "" = 
+	[
+		"" : "None"
+		"Pistol" : "Pistol"
+		"SMG1" : "SMG1"
+		"AR2" : "AR2"
+		"CombineHeavyCannon" : "Combine Heavy Cannon"
+	]
+
+	spawnflags(flags) =
+	[
+		8192: "Ignore range when making viewcone checks" : 0
+		256 : "Aiming Assistance (Player Only)" : 0
+	]
+]
+
+
+@SolidClass base(BaseTank) = func_tankpulselaser : "Brush Pulse Laser" 
+[
+	PulseSpeed(float)		: "Pulse Speed"		 : 1000		: "How fast does pulse travel"
+	PulseColor(color255)	: "Pulse Color"		 : "255 0 0" : "Color of the pulse"
+	PulseWidth(float)		: "Pulse Width"		 : "20"		: "Width of the pulse"
+	PulseLife(float)		: "Pulse Life"		 : 2			: "(Seconds)  How long the pulse lasts"
+	PulseLag(float)			: "Pulse Lag"		 : "0.05"	: "(Seconds)  How far behind is pulse tail"
+	PulseFireSound(sound)   : "Pulse Fire Sound" : ""		: "Sound played when pulse fires"
+]
+
+
+@SolidClass base(BaseTank) = func_tanklaser : "Brush Laser Turret" 
+[
+	laserentity(target_destination) : "env_laser Entity"
+]
+
+
+@SolidClass base(BaseTank) = func_tankrocket : "Brush Rocket Turret"
+[
+	rocketspeed(float) : "Projectile speed" : 800 : "Speed the rocket will travel at."
+]
+
+@SolidClass base(BaseTank) = func_tankairboatgun : "Airboat Gun Turret"
+[
+	airboat_gun_model(target_destination) : "Name of a prop_dynamic which is the airboat gun model"
+]
+
+@SolidClass base(BaseTank) = func_tankapcrocket : "APC Rocket Turret"
+[
+	rocketspeed(float) : "Projectile speed" : 800 : "Speed the rocket will travel at."
+	burstcount(integer) : "Burst shot count" : 10 : "Number of missiles to shoot in a burst"
+
+	input DeathVolley(void) : "Fire a burst of rockets cause we're dying."
+]
+
+
+@SolidClass base(BaseTank) = func_tankmortar : "Brush Mortar Turret" 
+[
+	iMagnitude(Integer) : "Explosion Magnitude" : 100
+	firedelay(string) : "Shell travel time" : 2 : "How long after the turret fires before the shell impacts"
+	firestartsound(sound) : "Firing start sound" : "" : "Sound of the mortar firing"
+	fireendsound(sound) : "Firing end sound" : "" 
+	incomingsound(sound) : "Incoming Shell Sound" : "" : "Sound of the shell falling on the target"
+	warningtime(float) : "Incoming warning time" : "1" : "How long before the shell impacts to play the warning sound"
+	firevariance(float) : "Fire time variance" : "0" : "How much variability to add to fire rate (time +-)"
+
+	input FireAtWill(void) : "Allow tank to fire next shot as soon as ready."
+]
+
+@SolidClass base(BaseTank) = func_tankphyscannister : "PhysCannister Turret"
+[
+	barrel_volume(target_destination) : "Barrel Volume" : "" : "Name of a trigger the specifies the volume in which cannisters must be placed."
+]
+
+//-------------------------------------------------------------------------
+//
+// Items
+//
+//-------------------------------------------------------------------------
+@BaseClass color(0 0 200) base(Targetname, Angles, Shadow) = Item
+[
+	output OnPlayerTouch(void) : "Fires when the player touches this object"
+]
+
+@PointClass base(BasePropPhysics, Targetname, Angles, DamageFilter) studio() = item_crate : "Item Crate"
+[
+	model(studio) : "World model" : "models/props/tools/humans/crates/cratea_medium3.mdl"
+
+	CrateType(choices) : "Crate Contains" : 0 =
+	[
+		0 : "Contains specified item"
+	]
+
+	ItemClass0(pointentityclass) : "Item Type #1" : "" : "Class name of the entity to spawn when the crate is broken"
+	ItemCount0(integer) : "Item Count #1" : 1 : "Number of items to emit upon breakage"
+	ItemClass1(pointentityclass) : "Item Type #2" : "" : "Class name of the entity to spawn when the crate is broken"
+	ItemCount1(integer) : "Item Count #2" : 1 : "Number of items to emit upon breakage"
+	ItemClass2(pointentityclass) : "Item Type #3" : "" : "Class name of the entity to spawn when the crate is broken"
+	ItemCount2(integer) : "Item Count #3" : 1 : "Number of items to emit upon breakage"
+	ItemClass3(pointentityclass) : "Item Type #4" : "" : "Class name of the entity to spawn when the crate is broken"
+	ItemCount3(integer) : "Item Count #4" : 1 : "Number of items to emit upon breakage"
+	ItemClass4(pointentityclass) : "Item Type #5" : "" : "Class name of the entity to spawn when the crate is broken"
+	ItemCount4(integer) : "Item Count #5" : 1 : "Number of items to emit upon breakage"
+
+	// Inputs
+	input Kill(void) : "Remove the item crate"
+	input Break(void) : "Breaks the breakable."
+	input SetHealth(integer) : "Sets a new value for health. If the breakable's health reaches zero it will break."
+	input AddHealth(integer) : "Adds health to the breakable. If the breakable's health reaches zero it will break."
+	input RemoveHealth(integer) : "Removes health from the breakable. If the breakable's health reaches zero it will break."
+	
+	output OnBreak(void) : "Fires when broken."
+	output OnHealthChanged(float) : "Fires when the health of this breakable changes, passing the new value of health as a percentage of max health, from [0..1]."
+]
+
+@PointClass base(Targetname, Angles) studio( "models/props_combine/suit_charger001.mdl" ) = item_suitcharger : "Battery recharger"
+[
+	// dmdelay(integer) : "Deathmatch recharge delay" : 0
+	_minlight(string) : "Minimum light level"
+
+	spawnflags(flags) =
+	[
+		8192  : "Citadel recharger" : 0
+		16384 : "Kleiner's recharger" : 0
+	]
+
+	input Recharge(void) : "Recharge to full"
+
+	output OutRemainingCharge(float) : "Remaining Charge."
+	output OnHalfEmpty(void) : "Half-Empty"
+	output OnEmpty(void) : "Empty"
+	output OnFull(void) : "Recharged to full."
+	output OnPlayerUse(void) : "Fired when the player +USEs the charger."
+]
+
+//-------------------------------------------------------------------------
+//
+// Weapons
+//
+//-------------------------------------------------------------------------
+@BaseClass color(0 0 200) base(Targetname, Angles) = Weapon
+[
+	spawnflags(Flags) =
+	[
+		1 : "Start constrained"		: 0
+		2 : "Start asleep"			: 0
+		4 : "Start motion disabled" : 0
+	]
+
+	output OnPlayerUse(void) : "Fires when the player +uses this weapon"
+	output OnPlayerPickup(void) : "Fires when the player picks up this weapon"
+	output OnNPCPickup(void) : "Fires when an NPC picks up this weapon"
+]
+
+@BaseClass base(Weapon , Takable) = mm_Weapon_Takable
+[
+]
+
+@SolidClass base(Trigger) = trigger_rpgfire :
+	"A volumetric trigger that triggers whenever an RPG is fired within it."
+[
+	// Outputs
+	output OnTrigger(void) : "Fires while the trigger is activated"
+]
+
+@SolidClass base(Trigger) = trigger_vphysics_motion :
+	"A volumetric trigger that affects the motion of vphysics objects that touch it."
+[
+	spawnflags(Flags) =
+	[
+		4096 : "Can move (through hierarchical attachment)" : 0
+	]
+
+	StartDisabled(choices) : "Start Disabled" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	filtername(filterclass) : "Filter Name" : : "Filter to use to see if activator triggers me. See filter_activator_name for more explanation."
+	SetGravityScale(float) : "Scale gravity of objects in the field." : "1.0"
+	input SetGravityScale(float) : "Scale gravity of objects in the field."
+
+	SetAdditionalAirDensity(float) : "Additional air density for drag" : "0"
+	input SetAdditionalAirDensity(float) : "Additional air density for drag"
+
+	SetVelocityLimit(float) : "Max velocity in field (0 disables)" : "0.0"
+	input SetVelocityLimit(float) : "Max velocity in field."
+
+	SetVelocityLimitDelta(float) : "Max amount to reduce velocity per second when it exceeds the velocity limit (0 disables)" : "0.0"
+	input SetVelocityLimitDelta(float) : "Max amount to reduce velocity per second"
+
+	input SetVelocityLimitTime(string) : "Accepts two arguments: the first is the new velocity limit, the second is the time it takes to ramp to that value"
+
+	SetVelocityScale(float) : "Velocity scale/drag" : "1.0"
+	input SetVelocityScale(float) : "Velocity scale/drag"
+
+	SetAngVelocityLimit(float) : "Max angular velocity in field (degrees/s, 0 disables)" : "0.0"
+	input SetAngVelocityLimit(float) : "Max angular velocity in field."
+
+	SetAngVelocityScale(float) : "Angular Velocity scale/drag" : "1.0"
+	input SetAngVelocityScale(float) : "Angular Velocity scale/drag"
+
+	SetLinearForce(float) : "Linear force (0 disables)" : "0.0"
+	input SetLinearForce(float) : "Linear force (0 disables)"
+
+	SetLinearForceAngles(angle) : "Direction of linear force (Pitch Yaw Roll (Y Z X))" : "0 0 0"
+//	input SetLinearForceAngles(angle) : "Direction of linear force (Pitch Yaw Roll (Y Z X))"
+
+	ParticleTrailMaterial(string) : "Particle Trail Material" : : "Name of a material to use for the particle trail, no name means no particle trail"
+	ParticleTrailLifetime(float) : "Particle Trail Lifetime" : 4 : "Lifetime of the particles to emit"
+	ParticleTrailStartSize(float) : "Particle Trail Starting Sprite Size" : 2 : "Starting size of the sprite to emit"
+	ParticleTrailEndSize(float) : "Particle Trail Ending Sprite Size" : 3 : "Ending size of the sprite to emit"
+
+	// Inputs
+	input	Enable(void) : "Enable the trigger."
+	input	Disable(void): "Disable the trigger."
+	input	Toggle(void) : "Toggle enable/disable."
+]
+
+@PointClass base(Targetname, Angles) size(16 16 16) line(255 255 255, targetname, target) color(247 181 82) = path_corner : "Generic path point"
+[
+	spawnflags(Flags) =
+	[
+		1: "Wait for retrigger" : 0
+		2: "Teleport to THIS path_corner" : 0
+	]
+	target(target_destination) : "Next stop target"
+	wait(integer) : "Wait here (secs)" : 0
+	speed(integer) : "New Train Speed" : 0
+	yaw_speed(integer) : "New Train rot. Speed" : 0
+
+	// Inputs 
+	input SetNextPathCorner(string) : "Sets next pathcorner"
+
+	// Outputs
+	output OnPass(void) : "Fires when a path follower passes this point"
+]
+
+@PointClass base(Targetname) size(16 16 16) color(255 0 0) = path_corner_crash : "Helicopter Crash Path"
+[
+	target(target_destination) : "Next stop target"
+]
+
+
+//-------------------------------------------------------------------------
+//
+// Player effects
+//
+//-------------------------------------------------------------------------
+@PointClass base(Targetname) iconsprite("editor/player_loadsaved.vmt") = player_loadsaved : "Load Auto-Saved game" 
+[
+	duration(string) : "Fade Duration (seconds)" : "2"
+	holdtime(string) : "Hold Fade (seconds)" : "-1"
+	renderamt(integer) : "Fade Alpha" : 255
+	rendercolor(color255) : "Fade Color (R G B)" : "0 0 0"
+	loadtime(string) : "Reload delay" : "0"
+	message(string) : "Game Over Message" : "mission_failed_fallydeath"
+	messagetime(float) : "Message Duration" : "2" : ""
+	
+
+	input Reload(void) : "Ends this game and reloads"
+]
+
+
+@PointClass base(Targetname) size(-16 -16 -16, 16 16 16) = player_weaponstrip : "Strips player's weapons"
+[
+	input Strip(void) : "Strip player's weapons"
+	input StripWeaponsAndSuit(void) : "Strip player's weapons and his suit"
+]
+
+@PointClass base(Targetname) size(-16 -16 -16, 16 16 16) = player_speedmod: "Speeds up or slows down player velocity over time (slow mo/fast forward)"
+[
+	input ModifySpeed(float) : "Modifies player speed by X ammount."
+]
+
+
+
+//-------------------------------------------------------------------------
+//
+// Logic Entities
+//
+//-------------------------------------------------------------------------
+@PointClass color(0 0 255) base(Targetname) iconsprite("editor/choreo_scene.vmt") = logic_choreographed_scene :
+	"Manages a choreographed scene of one or more actors."
+
+[
+	// Keys
+	SceneFile(scene) : "Scene file"
+
+	// Links
+	target1(target_destination)	: "Target 1"
+	target2(target_destination)	: "Target 2"
+	target3(target_destination)	: "Target 3"
+	target4(target_destination)	: "Target 4"
+	target5(target_destination)	: "Target 5"
+	target6(target_destination)	: "Target 6"
+	target7(target_destination)	: "Target 7"
+	target8(target_destination)	: "Target 8"
+
+	busyactor(choices) : "If an Actor is talking..." : 0 : "What to do if an actor this scene needs is already talking when this scene is told to start." =
+	[
+		0: "Default"
+		1: "Wait for actor to finish"
+	]
+	
+	IfPlayerInCombat(choices) : "If player is in combat mode" : 0 : "if Player is in combat / NPCs targeting Player." =
+	[
+		0: "Default"
+		1: "Vcd won't be launched"
+		2: "Wait end of combat mode to launch Vcd"
+	]
+	
+	
+	BreakOnNonIdle( choices ) : "Break on non idle" : 0 : "Cancel the VCD when one of the target NPC leaves idle state." = 
+	[
+		0: "No"
+		1: "Yes"
+	]
+
+
+	// Inputs
+	input Start(void) : "Starts playback of the scene file"
+	input Pause(void) : "Pauses playback of the scene file"
+	input PausePlayBackAndMoveTo(void) : "Pauses playback and Move to of the scene file"
+	input Resume(void) : "Resumes playback of the scene if it has been paused"
+	input Cancel(void) : "Cancels playback of the scene"
+
+	input InterjectResponse(string) : "Finds an actor who can respond to the specified concept string while the scene continues playing"
+
+	input StopWaitingForActor(void) : "Stop waiting on an actor to stop talking."
+
+	output OnStart(void) : "The scene has started"
+	output OnCompletion(void) : "The scene has completed"
+	output OnCanceled(void) : "The scene has been canceled"
+	output OnTrigger1(void) : "Scene trigger 1"
+	output OnTrigger2(void) : "Scene trigger 2"
+	output OnTrigger3(void) : "Scene trigger 3"
+	output OnTrigger4(void) : "Scene trigger 4"
+	output OnTrigger5(void) : "Scene trigger 5"
+	output OnTrigger6(void) : "Scene trigger 6"
+	output OnTrigger7(void) : "Scene trigger 7"
+	output OnTrigger8(void) : "Scene trigger 8"
+]
+
+
+@PointClass base(Targetname, Parentname) sphere(volume) iconsprite("editor/ai_sound.vmt") = ai_sound :
+	"This entity makes sounds or smells that can be sensed by NPCs, butnot by the player. This can be used " +
+	"to cause reactions in nearby NPCs./n/n" +
+	"Sound Types/n" +
+	"  Combat: Will cause most NPCs to become alert/n" +
+	"  World: Will cause most NPCs to become alert/n" +
+	"  Danger: Will cause most NPCs to move away from the position of the sound/n" +
+	"  Bullet Impact: /n" +
+	"  Carcass: /n" +
+	"  Meat: /n" +
+	"  Garbage: /n" +
+	"  Thumper: causes antlions to run away briefly/n" +
+	"  Readiness: (Low, Medium, High) Causes player companions that can hear this sound to change readiness/n"
+[
+	//input InsertSound(Integer) : "THIS IS NOW OBSOLETE. Use InsertAISound"
+	input EmitAISound(void) : "Make the sound."
+
+	volume(integer) : "Volume" : 120 : "How far away this sound can be heard. This is a radius."
+	duration(float) : "Duration" : "0.5" : "How long the sound persists each time you insert it."
+
+	soundtype(choices) : "Sound Type" : 0 : "The type of sound or smell will determine the reaction of NPCs that sense it." =
+	[
+		0: "Select one"
+		1: "Combat"
+		2: "World"
+		//4: "Player (Don't use)"
+		8: "Danger"
+		16: "Bullet Impact"
+		32: "Carcass"
+		64: "Meat"
+		128: "Garbage"
+		256: "Thumper"
+		16384 : "Readiness - Low"
+		32768 : "Readiness - Medium"
+		65536 : "Readiness - High"
+	]
+
+	soundcontext(choices) : "Sound Context" : 0 : "Additional sound context (optional)" =
+	[
+		0 : "Select one"
+		8388608 : "Only Combine hear"
+		67108864 : "Combine cannot hear"
+	]
+
+	locationproxy(target_destination) : "Location Proxy" : "" : "The name of an entity to use as a proxy to determine the location at which to make the sound. If you specify an entity here, the sound will be made at that entity's location (!player included)" 
+]
+
+
+@PointClass size( -4 -4 -4, 4 4 4 ) base(Targetname, Parentname) studio("models/props_combine/combine_mine01.mdl") = combine_mine : "Combine Land Mine"
+[
+	bounce(choices) : "Bounce" : 1 : "Whether the mine should bounce up in the air before exploding." =
+	[
+		0: "No"
+		1: "Yes"
+	]
+
+	LockSilently(choices) : "Lock Silently" : 1 : "If yes, mine plays no sound when clamps close" =
+	[
+		0: "No"
+		1: "Yes"
+	]
+
+	StartDisarmed(choices) : "Start Disarmed" : 0 : "If yes, mine begins dormant." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Outputs
+	output OnPulledUp(void) : "Fires when this mine is uprooted with physgun"
+
+	// Inputs
+	input Disarm(void) : "Disarm this mine (open hooks and shut off) if not placed by player."
+
+]
+
+@PointClass size( -4 -4 -4, 4 4 4 ) base(Targetname) = env_starfield : "Starfield effect" 
+[
+	input TurnOn(void) : "Turn on"
+	input TurnOff(void) : "Turn off"
+	input SetDensity(float) : "Set the density of the starfield. It's a multiplier, so 1 is the default."
+]
+
+@PointClass size( -4 -4 -4, 4 4 4 ) base(Targetname, Parentname) = env_ar2explosion : "AR2 explosion visual effect. Big, volume-filling brown cloud. Does not cause damage or emit sound."
+[
+	material(material) : "Particle Material" : "particle/particle_noisesphere" : "The material to use for each particle in the explosion."
+	particlesnumber(integer) : "Particles Number" : 70
+	dustradius(float) : "Dust Radius" : "240"
+	dustlifetime(float) : "Dust Lifetime" : "4"
+	dustlifetimedelta(float) : "Dust Lifetime Delta" : "6"
+	dustspeed(float) : "Dust speed" : "10000"
+	duststartsize(float) : "Dust Start Size" : "8"
+	dustendsize(float) : "Dust End Size" : "32"
+	dustalpha(float) : "Dust Alpha" : "0.5"
+	dustfadeintime(float) : "Dust Fade In Time" : "0.25"
+	dustcolor(color255): "Dust Color" : "255 255 255" 
+	input Explode(Void) : "Make the explosion effect."
+]
+
+@PointClass base(Targetname, Parentname) size(-4 -4 -4, 4 4 4) color(0 180 0) = env_terrainmorph : 
+	"Morphs terrain by pulling vertices along a normal./n/n" +
+	"Place this entity the desired distance from a terrain surface and set ANGLES " +
+	"to the normal along which you want to pull the surface's vertices. If you set the INSTANT spawnflag, " +
+	"the morph will take place instantly instead of over time./n"
+[
+	startradius( integer ) : "Start Radius" : 500 : "Radius of the effect when morphing begins. Only this value is used" +
+													"if the effect is flagged to occur instantly."
+	goalradius( integer ) : "Goal Radius" : 100 : "Radius of the effect at the end of morphing. The radius of this effect will change from "+
+												  "Start Radius to Goal Radius over the duration of this effect. This value is ignored if the effect is flagged to occur instantly."
+
+	duration( integer ) : "Duration" : 3 : "The morph will take place over this period of time (seconds). Ignored if flagged to occur instantly"
+
+	fraction( integer ) : "Displacement Fraction" : 1 : "If set to 1, the terrain surface will be pulled exactly to this entity's position." +
+														" If set to 0.5, the surface will be pulled exactly half way to this entity's position. " +
+														"If set to 2, the surface will be pulled to an imaginary point twice as far away as this entity. " +
+														"(Any Displacement Fraction greater than 1.0 will result in clipping. The surface cannot be pulled beyond " +
+														"This entity's position and any vertices attemping will clip to this entity's position. You may use this feature to create mesas.)"
+
+	// Inputs
+	input BeginMorph(void) : "Begin Morph"
+
+	spawnflags(flags) =
+	[
+		1: "Instant" : 0 
+	]
+]
+
+
+//-------------------------------------------------------------------------
+//
+// Camera/monitor entities
+//
+//-------------------------------------------------------------------------
+@PointClass base(Parentname, Angles) studioprop("models/editor/camera.mdl") = point_camera : "Camera"
+[
+	spawnflags(Flags) =
+	[
+		1 : "Start Off" : 0 
+	]
+
+	targetname(target_source) : "Name" : : "The name that other entities refer to this entity by."
+	FOV(float) : "FOV" : 90 : "Field of view in degrees"
+//	resolution(float) : "resolution" : 256 : "width/height of the render target for the camera"
+	UseScreenAspectRatio(choices) : "Screen Aspect Ratio" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]	
+	fogEnable(choices) : "Fog Enable" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]	
+	fogColor(color255) : "Fog Color" : "0 0 0"
+	fogStart(float) : "Fog Start" : 2048 : "The near fog plane."
+	fogEnd(float) : "Fog End" : 4096 : "The far fog/clipping plane."
+
+	input ChangeFOV(string) : "Changes camera's FOV over time"
+	input SetOnAndTurnOthersOff(void) : "Turn the camera on, and turn all other cameras off."
+	input SetOn(void) : "Turn the camera on."
+	input SetOff(void) : "Turn the camera off."
+]
+
+@SolidClass base(func_brush) = func_monitor :
+	"A monitor that renders the view from a given point_camera entity."
+[
+	target(target_destination) : "Camera name"
+	
+	// Inputs
+	input Toggle(void)		: "Toggle - If on, turn off, if off, turn on."
+	input Enable(void)		: "Enable."
+	input Disable(void)		: "Disable."
+	input SetCamera(string) : "Sets the camera to use for this monitor. Takes the name of a point_camera entity in the map."
+]
+
+
+//-------------------------------------------------------------------------
+//
+// Vehicles.
+//
+//-------------------------------------------------------------------------
+@BaseClass base(Targetname, Origin, Global, prop_static_base) = BaseVehicle
+[
+	vehiclescript(string) : "Vehicle Script File" : "scripts/vehicles/jeep_test.txt"
+	actionScale(float) : "Scale of action input / framerate" : "1"
+
+	input Action(float) : "Set the speed of the action animation"
+
+	input TurnOn(void)	: "Turn on: Start engine & enable throttle"
+	input TurnOff(void)	: "Turn off: Stop engine, disable throttle, engage brakes."
+
+	input Lock(void)	: "Prevent the player from entering or exiting the vehicle."
+	input Unlock(void)	: "Re-allow the player to enter or exit the vehicle."
+]
+
+
+@BaseClass base(BaseVehicle) = BaseDriveableVehicle
+[
+	VehicleLocked(choices) : "Start locked" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]	
+
+	output PlayerOn(void) : "Player entered the vehicle"
+	output PlayerOff(void) : "Player exited the vehicle"
+	
+	output PressedAttack(void) : "Player Pressed attack key"
+	output PressedAttack2(void) : "Player Pressed attack2 key"
+
+	output AttackAxis(string) : "State of attack button [0,1]"
+	output Attack2Axis(string) : "State of attack2 button [0,1]"
+	input HandBrakeOn(void) : "Turns the handbrake on"
+	input HandBrakeOff(void): "Releases the handbrake"
+]
+
+@PointClass base(BaseVehicle) studioprop() = prop_vehicle :
+	"Studiomodel vehicle that can be driven via inputs."
+[
+	input Steer(float) : "Steer the vehicle +/-1"
+	input Throttle(float) : "Throttle +/-1"
+
+	spawnflags(flags) =
+	[
+		1 : "Always Think (Run physics every frame)" : 0
+	]
+]
+
+
+@PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_driveable :
+	"Generic driveable studiomodel vehicle."
+[
+]
+
+@PointClass base(Targetname, Angles) studio() = point_apc_controller : "APC Controller"
+[
+	spawnflags(flags) =
+	[
+		1 : "Active" : 0
+	]
+
+	yawrate(string) : "Yaw rate" : "30"
+	yawtolerance(string) : "Yaw tolerance" : "15"
+	pitchrate(string) : "Pitch rate" : "0"
+	pitchtolerance(string) : "Pitch tolerance" : "20"
+	rotatestartsound(sound) : "Rotate Start Sound" : ""
+	rotatesound(sound) : "Rotate Loop Sound" : ""
+	rotatestopsound(sound) : "Rotate Stop Sound" : ""
+	minRange(string) : "Minmum target range" : "0"
+	maxRange(string) : "Maximum target range" : "0"
+	targetentityname(string) : "Name of entity I should follow/attack" : ""
+
+	// input
+	input Activate(void)				: "Turn the APC rockets on"
+	input Deactivate(void)				: "Turn the APC rockets off (go dormant)"
+
+	output OnFireAtTarget(void)			: "Fires when a valid target is found and the APC should shoot rockets"
+]
+
+@SolidClass base(Targetname, Origin, Angles, EnableDisable) = info_apc_missile_hint :
+	"Something that helps APC missiles guide. If the missile can hit the associated target entity"+
+	"between the time it takes the current enemy to enter + leave the hint, then the missile will guide to the entity."
+[
+	target(target_destination) : "Target Entity" : "" : "The entity that the missile will guide towards if the conditions are met."
+]
+
+@PointClass base(Targetname) = phys_constraintsystem : "Used to manage a group of interacting constraints and keep them stable."
+[
+]
+
+@PointClass base(BaseSpeaker) iconsprite("editor/ambient_generic.vmt") = env_speaker : "Announcement Speaker"
+[
+]
+
+//-------------------------------------------------------------------------
+// Script entities
+//-------------------------------------------------------------------------
+@PointClass base(Targetname) = script_intro : "Script: Custom entity used to handle the intro sequence."
+[
+	// Inputs
+	input Activate(void) : "Take control of the player's view and start blending the two scenes."
+	input Deactivate(void) : "Stop controlling the view."
+	input SetCameraViewEntity(string) : "Set the viewpoint to blend with the player's viewpoint."
+	input SetBlendMode(integer) : "Set the blending mode to use."
+	input SetFOV(integer) : "Set the fov for the second camera."
+	input SetNextFOV(integer) : "Set the FOV to blend to over time. Follow this with a SetFOVBlendTime input to start the fov blend."
+	input SetFOVBlendTime(float) : "Set the amount of time it should take to blend to the next fov target, and start blending."
+	input SetNextBlendMode(integer) : "Set the blending mode to blend to over time. Follow this with a SetNextBlendTime input to start the mode blend."
+	input SetNextBlendTime(float) : "Set the amount of time it should take to blend to the next mode, and start blending."
+	input FadeTo(string) : "Fade to a specific alpha amount of an amount of time. Parameters: <alpha> <duration>"
+	input SetFadeColor(string) : "Set the fade color. Parameters: <Red> <Green> <Blue>"
+]
+
+//-------------------------------------------------------------------------
+//
+// Special effects
+//
+//-------------------------------------------------------------------------
+
+@PointClass base(Angles,Targetname,Parentname) = env_citadel_energy_core : "Special effect for the energy cores in citadel."
+[
+	spawnflags(Flags) = 
+	[
+		1 : "No small particles" : 0
+		2 : "Start on" : 0
+	]
+
+	scale(float) : "Scale" : 1 : "Scale of the effect.  1 is the default size, 2 is twice that, etc."
+
+	// Inputs
+	input StartCharge(float) : "Start charging the core over specified number of seconds."
+	input StartDischarge(void) : "Start discharging the core over specified number of seconds."
+	input Stop(float) : "Stops the effect at any point."
+]
+
+@PointClass base(Angles,Targetname,Parentname) size(-4 -4 -4, 4 4 4) color(0 0 255) line( 0 0 255, targetname, EndTargetName) = env_alyxemp : "Special effect for the Alyx's EMP device."
+[
+	Type(choices) : "EMP Type" : 0 =
+	[
+		0 : "Small"
+		1 : "Large"
+	]	
+
+	EndTargetName(target_destination) : "Target Entity" : "" : "Entity to use as a target endpoint."
+
+	// Inputs
+	input StartCharge(float) : "Start charging the effect over specified number of seconds."
+	input StartDischarge(void) : "Start discharging the effect over specified number of seconds."
+	input Stop(float) : "Stops the effect at any point."
+	input SetTargetEnt(string) : "Sets the target entity for the effect."
+]
+
+
+@NPCClass base(BaseArxAlly) studio() = npc_orc_sword : "Orc with sword"
+[
+	
+	model(choices) : "Model" : "models/NPC/Orc/npc_orc.mdl" =
+	[
+		
+		"models/NPC/Orc/npc_orc.mdl"			: "Orc Warrior"			
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arxorccleaver" =
+	[
+		"weapon_arxorccleaver"			: "Cleaver"
+		"weapon_arx_long_sword"			: "Long Sword for Tutorial Only"
+		"0" 							: "Nothing"
+	]
+	
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_orc" =
+	[
+		"weapon_mm_shield_orc"		: "Orc Big Wooden Shield"
+		"weapon_mm_shield_orcsmall" : "Orc Small Round Shield"
+		"0" 					: "Nothing"
+	]
+
+	additionalhelmet(choices) : "Helmet" : "weapon_arxhelmet" =
+	[
+		"weapon_arxhelmet"		: "Type Helmet"
+		"0" 					: "Nothing"
+	]
+
+	health(Integer) : "Health" : 0 : "Health on start"
+
+	
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_orc_chief : "Orc Chief"
+[
+	
+	model(choices) : "Model" : "models/NPC/Orc_chief/npc_orc_chief.mdl" =
+	[
+		
+		"models/NPC/Orc_chief/npc_orc_chief.mdl"			: "Orc Chief model"			
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arxorccleaver" =
+	[
+		"weapon_arxorccleaver"			: "Cleaver"
+		"0" 							: "Nothing"
+	]
+
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_orcsmall" =
+	[		
+		"weapon_mm_shield_orcsmall" : "Orc Small Round Shield"
+		"0" 					: "Nothing"
+	]
+
+	additionalhelmet(choices) : "Helmet" : "weapon_mm_helmet_orcchief" =
+	[
+		"weapon_mm_helmet_orcchief"		: "Type Orc Chief Helmet"
+		"0" 					: "Nothing"
+	]
+	
+
+	health(Integer) : "Health" : 0 : "Health on start"
+
+	
+]
+
+@NPCClass base( BaseArx, Parentname, Studiomodel ) studio() = npc_mm_generic : "npc_mm_generic"
+[
+]
+
+@BaseClass base(BaseArxAlly) studio() = npc_bow
+[
+	QuiverModel(choices) : "Quiver Model" : "" =
+	[
+		"models/items/weapons/Quiver_Orc/quiver_orc.mdl" : "orc quiver"
+		"models/items/weapons/Quiver_guard/quiver_guard.mdl" : "guard quiver"
+	]		
+
+	QuiverAmmo(Integer) : "Quiver Ammo" : 0 
+]
+
+
+@BaseClass base(npc_bow) studio() = npc_orc_bow : "Orc bow"
+[
+	model(choices) : "Model" : "models/NPC/Orc/npc_orc.mdl" =
+	[		
+		"models/NPC/Orc/npc_orc.mdl"			: "Orc Warrior"			
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arxorccleaver" =
+	[
+		"weapon_arxorccleaver"			: "Cleaver"
+		"0" 							: "Nothing"
+	]
+	
+	rangeweapon(choices) : "Range Weapon" : "weapon_arxcrossbow" =
+	[		
+		"weapon_mm_bow_long"			: "Long Bow"
+		"0" 							: "Nothing"
+	]
+
+	additionalhelmet(choices) : "Helmet" : "weapon_arxhelmet" =
+	[
+		"weapon_arxhelmet"		: "Type Helmet"
+		"0" 					: "Nothing"
+	]
+
+	health(Integer) : "Health" : 0 : "Health on start"
+]
+
+@NPCClass base(npc_bow) studio() = npc_human_guard_bow : "human guard bow"
+[
+	model(choices) : "Model" : "models/NPC/Guard/npc_guard.mdl" =
+	[		
+		"models/NPC/Guard/npc_guard.mdl"			: "guard Warrior"			
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arx_short_sword" =
+	[
+		"weapon_arx_short_sword"			: "Short Sword"
+		"0" 					: "Nothing"
+	]
+	
+	rangeweapon(choices) : "Range Weapon" : "weapon_arxcrossbow" =
+	[		
+		"weapon_arxcrossbow"			: "Bow"
+		"0" 							: "Nothing"
+	]
+	
+	additionalhelmet(choices) : "Helmet" : "weapon_mm_helmet_guard" =
+	[
+		"weapon_mm_helmet_guard"		: "Guard Helmet"
+		"0" 				: "Nothing"
+	]
+]
+
+
+@NPCClass base(npc_bow) studio() = npc_necro_guard_bow : "necro guard bow"
+[
+	model(choices) : "Model" : "models/npc/Necroguard/npc_necroguard.mdl" =
+	[		
+		"models/npc/Necroguard/npc_necroguard.mdl"			: "Necro Guard"			
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arx_short_sword" =
+	[
+		"weapon_arx_short_sword"		: "Short Sword"
+		"0" 					: "Nothing"
+	]
+	
+	rangeweapon(choices) : "Range Weapon" : "weapon_arxcrossbow" =
+	[		
+		"weapon_arxcrossbow"			: "Bow"
+		"0" 							: "Nothing"
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_cyclope : "Cyclope"
+[
+
+	model(choices) : "Model" : "models/NPC/cyclope/npc_cyclope.mdl" =
+	[		
+		"models/NPC/cyclope/npc_cyclope.mdl"		: "Cyclope"
+	]
+
+	health(Integer) : "Health" : 0 : "Health on start"
+
+	input KillInRagdoll( void ) : "Kill cyclope immediately and create the ragdoll"
+	
+	input ThrowNpcsOn( string ) : "Cyclope must throw npcs in radius on a target"
+	input ThrowNpcsOff( void ) : "Cyclope stop throwing npcs"
+	input AttackLow( target_destination ) : "Cyclope go to target and use low attacks."
+	input StopAttackLow( void ) : "Cyclope stop low attacks."
+	input EnableEyeBlood( bool ) : "Enable/Disable eye blood."
+	input IncreaseBoneFollowerPerf( bool ) : "Enable/Disable BoneFollower Perf. Disable collision between bone follower and world."
+
+	output OnImpaled(void)		: "On impaled"
+]
+
+@NPCClass base(npc_cyclope) studio() = npc_cyclope_undead : "Cyclope Undead"
+[
+
+	model(choices) : "Model" : "models/NPC/cyclope_undead/npc_cyclope_undead.mdl" =
+	[		
+		"models/NPC/cyclope_undead/npc_cyclope_undead.mdl"		: "Cyclope Undead"
+	]
+	
+	health(Integer) : "Health" : 0 : "Health on start"
+
+	input KillInRagdoll( void ) : "Kill cyclope immediately and create the ragdoll"
+]
+
+@NPCClass base(BaseNPC) studio() = npc_worm : "Worm"
+[
+
+	model(choices) : "Model" : "models/NPC/worm/npc_worm.mdl" =
+	[		
+		"models/NPC/worm/npc_worm.mdl"		: "Worm"
+	]
+
+	target(target_destination) : "Target path_track" : : "If set, the name of a path_track entity that this NPC will fly to after spawning."
+
+	input SetTrack(target_destination) : "Set a track for the helicopter to adhere to. The helicopter will do nothing if he's on the same path, and will move to the closest point on the specified track if he's on a different path."
+	input FlyToSpecificTrackViaPath(target_destination) : "The helicopter will first fly to the closest point on the path if he's on a different path. Then he'll fly along the path to the specified track point."
+	input Appear(target_destination)				: "Worm appear. String destination represents the path_track where is teleported"
+	input AppearQuick(target_destination)			: "Worm appear quickly. String destination represents the path_track where is teleported"
+	input Disappear(void)				: "Worm disappear"
+	input DisappearQuick(void)			: "Worm disappear quickly"
+	input SetSpeed(float)				: "Set the speed of worm. If negative value, the speed is set to the default value."
+
+	input SetAttackArch(void)				: "Worm will attack into an arch"
+	input SetAttackLittleArch(void)			: "Worm will attack into a little arch"
+	input SetAttackUnreachEnemy(void)		: "Worm will not attack"
+	input SetAttackNormal(void)				: "Worm will attack normally"
+	input SetAttackBig(void)				: "Worm will use big attack"
+	input SetAttackBalista(void)			: "Worm will attack the balista"
+
+	output OnAttackBigFinished(void)		: "On Finish big attack"
+	output OnAttackLittleArchFinished(void)	: "On Finish little arch attack"
+	output OnAttackArchFinished(void)		: "On Finish arch attack"
+	output OnAttackBalistFinished(void)		: "On Finish Balist attack"
+
+	output OnAttackBigBegun(void)			: "On Begin big attack"
+	output OnAttackLittleArchBegun(void)	: "On Begin little arch attack"
+	output OnAttackArchBegun(void)			: "On Begin arch attack"
+	output OnAttackBalistBegun(void)		: "On Begin Balist attack"
+
+	spawnflags(Flags) =
+	[		
+		// AWAIT INPUT will make the helicopter spawn disabled, awaiting 
+		// the "Activate" input to start acting.
+		64 : "Await Input" : 0
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_ghoul : "Ghoul"
+[
+	model(choices) : "Model" : "models/NPC/Ghoul/Npc_ghoul.mdl" =
+	[
+		"models/NPC/Ghoul/Npc_ghoul.mdl"			: "Ghoul model"	
+	]
+]
+
+@NPCClass base(npc_ghoul) studio() = npc_ghoul_friendly : "Ghoul Sympa"
+[	
+]
+
+@NPCClass base(BaseArxBiped) studio() = npc_pig : "Pig"
+[
+	model(choices) : "Model" : "models/NPC/Pig/pig.mdl" =
+	[
+		"models/NPC/Pig/pig.mdl"			: "Pig model"	
+	]
+]
+
+@NPCClass base(BaseArxBiped) studio() = npc_dog : "Dog"
+[
+	model(choices) : "Model" : "models/NPC/dog/npc_Dog.mdl" =
+	[
+		"models/NPC/dog/npc_Dog.mdl"			: "Dog model"	
+	]
+]
+
+@NPCClass base(BaseArxBiped) studio() = npc_horse : "Horse"
+[
+	spawnflags(flags) =
+	[
+		262144: "Dont recompute collision box(if you use his physics object like in a constraint)." : 0
+	]
+	
+	model(choices) : "Model" : "models/NPC/Horse/Horse.mdl" =
+	[
+		"models/NPC/Horse/Horse.mdl"			: "Horse model"	
+	]
+]
+
+@NPCClass base(npc_horse) studio() = npc_horse_rideable : "Rideable Horse" 
+[ 
+	input ForcePlayerEnter( void ) : "Force Player to mount"
+	input ForcePlayerExit( void ) : "Force Player to unmount"
+	input EnablePlayerEnter( void ) : "Player can mount"
+	input EnablePlayerExit( void ) : "Player can unmount"
+	input DisablePlayerEnter( void ) : "Player cannot mount"
+	input DisablePlayerExit( void ) : "Player cannot unmount"
+
+	input EnablePlayerAnimation( string ) : "add player special animation"
+	input DisablePlayerAnimation( void ) : "remove player special animation"
+]
+
+@NPCClass base(prop_dynamic) studio() = vehicle_mm_barge : "Barge" 
+[ 
+    model(studio) : "World model" : "models/props/tools/humans/barge/barge01.mdl"
+
+	input ForcePlayerEnter( void ) : "Force Player to mount"
+	input ForcePlayerExit( void ) : "Force Player to unmount"
+	input ForcePlayerFastExit( void ) : "Force Player to unmount fast to avoid crash"
+	input EnablePlayerEnter( void ) : "Player can mount"
+	input EnablePlayerExit( void ) : "Player can unmount"
+	input DisablePlayerEnter( void ) : "Player cannot mount"
+	input DisablePlayerExit( void ) : "Player cannot unmount"
+	
+	input AddNPCPassenger1(string) : "Add target npc  to vehicicle in slot 1"
+	input AddNPCPassenger2(string) : "Add target npc  to vehicicle in slot 2"
+	input AddNPCPassenger3(string) : "Add target npc  to vehicicle in slot 3"
+	input AddNPCPassenger4(string) : "Add target npc  to vehicicle in slot 4"
+	input RemoveNPCPassenger1(string) : "Remove target npc  from vehicicle from slot 1"
+	input RemoveNPCPassenger2(string) : "Remove target npc  from vehicicle from slot 2"
+	input RemoveNPCPassenger3(string) : "Remove target npc  from vehicicle from slot 3"
+	input RemoveNPCPassenger4(string) : "Remove target npc  from vehicicle from slot 4"
+	
+	input SetVehicleAnimation(integer) : "Set vehicle animation (0,1 or 2)"
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_villager_male : "Villager Male"
+[
+	model(choices) : "Model" : "models/NPC/villager_male/Npc_Villager_Male.mdl" =
+	[
+		"models/NPC/villager_male/Npc_Villager_Male.mdl"		: "Villager Male 01"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_necro_civilian : "NecroCivilian"
+[
+	model(choices) : "Model" : "models/NPC/necrocivilian/Npc_necrocivilian.mdl" =
+	[
+		"models/NPC/necrocivilian/Npc_necrocivilian.mdl"		: "Necrocivilian"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_villager_female : "Villager Female"
+[
+	model(choices) : "Model" : "models/NPC/villager_female/Npc_Villager_Female.mdl" =
+	[
+		"models/NPC/villager_female/Npc_Villager_Female.mdl"	: "Villager Female 01"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_undead : "Undead"
+[
+	model(choices) : "Model" : "models/NPC/Undead/Npc_undead.mdl" =
+	[
+		"models/NPC/Undead/Npc_undead.mdl"			: "Undead model"	
+	]
+	UnburrowRadius(Integer) : "Unburrow detect radius" : 300 : "Unburrow detect radius"
+	UnburrowSequence(String) : "Unburrow sequence for systemic AI" : "" : "Unburrow sequence for systemic AI"
+	BurrowedSequence(String) : "Burrowed sequence for systemic AI" : "" : "Burrowed sequence for systemic AI"
+	UnburrowChanceOverride(float) : "Unburrow chance override" : -1 : "Unburrow chance override. Set to -1 if you don't want to override the value in qct"
+	SmellRadius(Integer) : "Smell detect radius" : 300 : "Bellow this radius, NPC smell player"
+
+	spawnflags(Flags) =
+	[		
+		// Don't spawn immediatly 		
+		16384 : "Wait for spawn (burrowed)" : 0
+		32768 : "Don't face player while unburrow" : 1
+	]
+
+	input ForceUnburrow( string ) : "Force Unburrow"
+
+	output OnUnburrow(void) : "Fires when npc Unburrow by input or by systemic AI."
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_villager_undead : "Undead Villager"
+[
+	model(choices) : "Model" : "models/NPC/Villager_Undead/Npc_villager_undead.mdl" =
+	[
+		"models/NPC/Villager_Undead/Npc_villager_undead.mdl"			: "Undead Villager model"	
+	]
+	UnburrowRadius(Integer) : "Unburrow detect radius" : 300 : "Unburrow detect radius"
+	UnburrowSequence(String) : "Unburrow sequence for systemic AI" : "" : "Unburrow sequence for systemic AI"
+	UnburrowChanceOverride(float) : "Unburrow chance override" : -1 : "Unburrow chance override. Set to -1 if you don't want to override the value in qct"
+	SmellRadius(Integer) : "Smell detect radius" : 300 : "Bellow this radius, NPC smell player"
+
+	spawnflags(Flags) =
+	[		
+		// Don't spawn immediatly 		
+		16384 : "Wait for spawn (burrowed)" : 0
+		32768 : "Don't face player while unburrow" : 1
+	]
+
+	input ForceUnburrow( string ) : "Force Unburrow"
+
+	output OnUnburrow(void) : "Fires when npc Unburrow by input or by systemic AI."
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_lich : "Lich"
+[
+	model(choices) : "Model" : "models/npc/Lich/Npc_Lich.mdl" =
+	[
+		"models/npc/Lich/Npc_Lich.mdl"			: "Lich Model"	
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_lich_king : "Lich King"
+[
+	model(choices) : "Model" : "models/NPC/lich_king/npc_lich_king.mdl" =
+	[
+		"models/NPC/lich_king/npc_lich_king.mdl"			: "Lich king model"	
+	]
+
+	additionalhelmet(choices) : "Helmet" : "weapon_mm_helmet_lichcrown" =
+	[
+		"weapon_mm_helmet_lichcrown"		: "Type Crown"
+		"0" 				: "Nothing"
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_necro_guard : "Necromancer Guard"
+[
+	model(choices) : "Model" : "models/npc/Necroguard/npc_necroguard.mdl" =
+	[
+		"models/npc/Necroguard/npc_necroguard.mdl"			: "Necro Guard model"	
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arx_short_sword" =
+	[
+		"weapon_arx_short_sword"		: "Short Sword"
+		"0" 					: "Nothing"
+	]
+	
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_necroguard" =
+	[
+		"weapon_mm_shield_necroguard"		: "NecroGuard Shield"
+		"0" 					: "Nothing"
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_necromancer : "Necromancer"
+[
+	model(choices) : "Model" : "models/NPC/Necromancer/Npc_necromancer.mdl" =
+	[
+		"models/NPC/Necromancer/Npc_Necromancer.mdl"			: "Necromancer model"
+
+	]
+	additionalequipment(choices) : "Weapons" : "weapon_mm_hook" =
+	[
+		"weapon_mm_hook"			: "Hook"
+		"0" 					: "Nothing"
+	]
+
+	EnableSummonSpider(integer) : "SummonSpider" : 1 : "Enable summoning of spider"
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_servant_specter : "Servant_specter"
+[
+	model(choices) : "Model" : "models/NPC/servant_specter/npc_servant_specter.mdl" =
+	[
+		"models/NPC/servant_specter/npc_servant_specter.mdl"			: "servant_specter model"
+
+	]
+	additionalequipment(choices) : "Weapons" : "weapon_mm_specter_knife" =
+	[
+		"weapon_mm_specter_knife"			: "Specter Knife"
+		"0" 								: "Nothing"
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_necromancer_lord : "Necromancer Lord"
+[
+	model(choices) : "Model" : "models/NPC/Necromancer_lord/Npc_necromancer_lord.mdl" =
+	[
+		"models/NPC/Necromancer_Lord/Npc_Necromancer_Lord.mdl"			: "Necro Lord model"	
+	]
+	additionalequipment(choices) : "Weapons" : "weapon_mm_hook" =
+	[
+		"weapon_mm_hook"			: "Hook"
+		"0" 					: "Nothing"
+	]
+]
+
+@NPCClass base(BaseArx) studio() = npc_facehugger : "Facehugger"
+[
+	model(choices) : "Model" : "models/NPC/Facehugger/Npc_Facehugger.mdl" =
+	[
+		"models/NPC/Facehugger/Npc_Facehugger.mdl"			: "Facehugger model"	
+	]
+
+]
+
+//@NPCClass base(BaseArx) studio() = npc_flyinghead : "FlyingHead"
+//[
+//	model(choices) : "Model" : "models/NPC/Flying_Head/Npc_Flying_Head.mdl" =
+//	[
+//		"models/NPC/Flying_Head/Npc_Flying_Head.mdl"		: "FlyingHead model"	
+//	]
+//]
+
+@NPCClass base(BaseArxAlly) studio() = npc_Leanna : "Leanna"
+[
+	model(choices) : "Model" : "models/NPC/Leanna/Npc_Leanna.mdl" =
+	//model(choices) : "Model" : "models/NPC/villager_female/Npc_Villager_Female.mdl" =
+	[
+		"models/NPC/Leanna/Npc_Leanna.mdl"			: "Leanna model"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_Arantir : "Arantir"
+[
+	model(choices) : "Model" : "models/NPC/Arantir/npc_Arantir.mdl" =
+	[
+		"models/NPC/Arantir/npc_Arantir.mdl"			: "Arantir model"	
+	]
+	
+	input StartGrab( void ) : "Launch Arantir's grab"
+	input StartStasisFX( void ) : "Launch Arantir's effect stasis."
+	input AllowSpecialBackStab(bool) : "Allow/disallow the special backstab on arantir."
+	
+	//output OnEndStasisComplete(void) : "Launch when Arantir finish his stasis when free stasis done on bonedragon."
+	output OnBeginStunnedStasis(void) : "Launch when begin his idle stunned animation."
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_Menelag : "Menelag"
+[
+	model(choices) : "Model" : "models/NPC/Menelag/NPC_Menelag.mdl" =
+	[
+		"models/NPC/Menelag/NPC_Menelag.mdl"			: "Menelag model"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_Phenrig : "Phenrig"
+[
+	model(choices) : "Model" : "models/NPC/Phenrig/NPC_Phenrig.mdl" =
+	[
+		"models/NPC/Phenrig/NPC_Phenrig.mdl"			: "Phenrig model"	
+	]
+
+]
+
+@NPCClass base(BaseArxAlly) studio() = npc_wizard : "Wizard"
+[
+	model(choices) : "Model" : "models/NPC/Wizard/Npc_Wizard.mdl" =
+	[
+		"models/NPC/Wizard/Npc_Wizard.mdl"			: "Wizard model"	
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_mm_staff_wood" =
+	[
+		"weapon_mm_staff_wood": "Staff"
+		"0" 					: "Nothing"
+	]
+]
+
+@NPCClass base(BaseArxAlly) studio("models/NPC/Goblin/Npc_Goblin.mdl") = npc_goblin : "Goblin"
+[
+	model(choices) : "Model" : "models/NPC/Goblin/Npc_Goblin.mdl" =
+	[
+		"models/NPC/Goblin/Npc_Goblin.mdl"			: "Goblin model"	
+	]
+	
+	additionalequipment(choices) : "Weapons" : "weapon_arxclub" =
+	[
+		"weapon_arxclub"			: "Type Club"
+		"0" 					: "Nothing"
+	]
+
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_gob" =
+	[
+		"weapon_mm_shield_gob"		: "Type Shield"
+		"0" 					: "Nothing"
+	]
+
+	input BeginAlwaysLaunchStone( void ) : "Always throw stone"
+	input StopAlwaysLaunchStone( void ) : "Stop Always throw stone"
+//	input BeginFlee( void ) : "Launch flee"
+//	input StopFlee( void ) : "Stop flee"
+]
+
+@PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") sphere() = ai_flee : "AI Flee - Sets flee for NPCs."
+[
+	subject(target_name_or_class) : "Subject(s)" : "" : "This is the NPC(s) whose disposition will change. May be a targetname, a squadname or a classname."
+	
+//	StartActive(choices) : "Start Active" : 0 =
+//	[
+//		0 : "No"
+//		1 : "Yes"
+//	]
+
+	// Inputs
+	input Activate(void) : "Activate"
+	input Desactivate(void) : "Desactivate"
+]
+
+
+@PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") = mm_ai_ambush : "AI Ambush : Ambush on player."
+[
+	subject1(target_name_or_class) : "Subject(s) 1" : "" : "First target on which ambush will be applied. May be a targetname, a squadname or a classname."
+	subject2(target_name_or_class) : "Subject(s) 2" : "" : "Second target on which ambush will be applied. May be a targetname, a squadname or a classname."
+	subject3(target_name_or_class) : "Subject(s) 3" : "" : "Third target on which ambush will be applied. May be a targetname, a squadname or a classname."
+	subject4(target_name_or_class) : "Subject(s) 4" : "" : "Forth target on which ambush will be applied. May be a targetname, a squadname or a classname."
+	subject5(target_name_or_class) : "Subject(s) 5" : "" : "Fifth target on which ambush will be applied. May be a targetname, a squadname or a classname."
+	
+	targetnode1(target_name_or_class) : "target(s) 1" : "" : "First node on which ambush will be applied."
+	targetnode2(target_name_or_class) : "target(s) 2" : "" : "Second node on which ambush will be applied."
+	targetnode3(target_name_or_class) : "target(s) 3" : "" : "Third node on which ambush will be applied."
+	targetnode4(target_name_or_class) : "target(s) 4" : "" : "Forth node on which ambush will be applied."
+	targetnode5(target_name_or_class) : "target(s) 5" : "" : "Fifth node on which ambush will be applied."
+
+	// Inputs
+	input PrepareAmbush(void) : "PrepareAmbush"
+]
+
+@NPCClass base(BaseArxAlly) studio("models/NPC/deathknight/Npc_deathknight.mdl") = npc_death_knight : "DeathKnight"
+[
+	model(choices) : "Model" : "models/NPC/deathknight/Npc_deathknight.mdl" =
+	[
+		"models/NPC/deathknight/Npc_deathknight.mdl"			: "Guard model"	
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arx_long_sword" =
+	[
+		"weapon_arx_long_sword"			: "Long Sword"
+		"0" 					: "Nothing"
+	]
+
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_deathknight" =
+	[
+		"weapon_mm_shield_deathknight"		: "Deathknight Shield"
+		"0" 					: "Nothing"
+	]	
+]
+
+@NPCClass base(BaseArxAlly) studio("models/NPC/Guard/Npc_Guard.mdl") = npc_human_guard : "Human Guard"
+[
+	model(choices) : "Model" : "models/NPC/Guard/Npc_Guard.mdl" =
+	[
+		"models/NPC/Guard/Npc_Guard.mdl"			: "Guard model"	
+	]
+
+	additionalequipment(choices) : "Weapons" : "weapon_arx_short_sword" =
+	[
+		"weapon_arx_short_sword"			: "Short Sword"
+		"0" 					: "Nothing"
+	]
+	
+	additionalshield(choices) : "Shield" : "weapon_mm_shield_guard" =
+	[
+		"weapon_mm_shield_guard"		: "Guard Shield"
+		"0" 					: "Nothing"
+	]
+
+	additionalhelmet(choices) : "Helmet" : "weapon_mm_helmet_guard" =
+	[
+		"weapon_mm_helmet_guard"		: "Guard Helmet"
+		"0" 					: "Nothing"
+	]
+
+	health(Integer) : "Health" : 0 : "Health on start"
+
+]
+
+@NPCClass base(BaseArx) studio() = npc_spider_giant : "Spider_Giant"
+[
+	model(choices) : "Model" : "models/NPC/Spider_monster/Npc_Spider_monster.mdl" =
+	[
+		"models/NPC/Spider_Giant/Npc_Spider_Monster.mdl"			: "Spider_Monster model"	
+	]
+
+	input SetStateIdle( void ) : "Set the no attack mode."
+	input SetStateNormal( void ) : "Set the normal mode."
+	input AttackNodeHigh( target_destination ) : "Set the attack high mode."
+	input AttackNodeLow( target_destination ) : "Set the attack low mode."	
+	input AttackNodeLeanna( target_destination ) : "Set the attack leanna mode : like attack high but on leanna's location."
+]
+
+@NPCClass base(BaseArx) studio() = npc_spider_regular : "Spider_Regular"
+[
+	model(choices) : "Model" : "models/NPC/Spider_Regular/Npc_Spider_Regular.mdl" =
+	[
+		"models/NPC/Spider_Regular/Npc_Spider_Regular.mdl"			: "Spider_Regular model"	
+	]
+
+]
+
+@NPCClass base(BaseArx) studio() = npc_spider_mini : "Spider_Mini"
+[
+	model(choices) : "Model" : "models/NPC/spider_mini/Npc_spider_mini.mdl" =
+	[
+		"models/NPC/spider_mini/Npc_spider_mini.mdl"			: "Spider_Mini model"	
+	]
+
+]
+
+
+@NPCClass base(BaseHelicopter) studio("models/NPC/Paokai/Npc_Paokai.mdl") = npc_paokai : "Paokai"
+[
+	model(choices) : "Model" : "models/NPC/Paokai/Npc_Paokai.mdl" =
+	[
+		"models/NPC/Paokai/Npc_Paokai.mdl"			: "Paokai model"	
+	]
+
+	input EnableGroundAttack( void ) : "Allow the gunship to use its ground attack"
+	input DisableGroundAttack( void ) : "Don't allow the gunship to use its ground attack"
+	input DoGroundAttack( string ) : "Causes the gunship to execute its ground attack"
+
+	input SetActivity( string ) : "Set an activity"
+	input EnableLongFlight( void ) : "Enable flight with large sequences"
+	input DisableLongFlight( void ) : "Disable flight with large sequences"
+
+	input EnableDoNothing( void ) : "Enable do nothing"
+	input DisableDoNothing( void ) : "Disable do nothing"
+
+	input TestDieCorridor( void ) : "Test if die into the corridor"
+	input TestEndDieCorridor( void ) : "Stop test if die into the corridor"
+	
+	input KillCorridor( void ) : "Kill paokai into the corridor"
+	input KillInRagdoll( void ) : "Kill paokai immediately and create the ragdoll"
+
+	input CanBeTargetted(bool) : "Paokai can be or not targeted by npcs"
+	health(Integer) : "Health" : 0 : "Health on start"
+	
+	output OnTestKillCorridorFail(void)			: "test kill corridor fail"
+	output OnTestKillCorridorSuccess(void)		: "test kill corridor success"
+	
+	spawnflags(Flags) =
+	[
+		4096 : "No ground attack" : 0
+		131072: "Dont lose health." : 0
+	]
+]
+
+@NPCClass base(npc_paokai) studio("models/NPC/bone_dragon/npc_bone_dragon.mdl") = npc_bonedragon : "BoneDragon"
+[
+	model(choices) : "Model" : "models/NPC/bone_dragon/npc_bone_dragon.mdl" =
+	[
+		"models/NPC/bone_dragon/npc_bone_dragon.mdl"			: "BoneDragon model"	
+	]
+	
+	LifeBreakStasis(float) : "Life to break stasis." : 100 : "Life lost by the bone dragon to stun the linked npc."
+	
+	input StartStasis( target_destination ) : "Start stasis with a target."
+	input FreeStasis( void ) : "Free stasis."
+	input Desintegrate( void ) : "Desintegrate npc."
+]
+
+@PointClass base(Targetname, Parentname) iconsprite("editor/env_torch.vmt") color(0 180 0) = env_torch : "Firestarter"
+[
+	torchsound(sound) : "torch sound"
+	TorchMaterial(material) : "Torch material"
+
+	health(integer) : "Duration" : 30 : "Amount of time the fire will burn."
+	firesize(integer) : "Size" : 64 : "Height (in world units) of the flame."
+	fireattack(integer) : "Attack" : 4 : "Amount of time the fire takes to grow to full strength."
+	firetype(choices) : "Type" : 0 =
+	[
+		0 : "Natural"
+		1 : "Plasma"
+	]
+	spawnflags(flags) =
+	[
+		1:	"Infinite Duration" : 0
+		2:	"Smokeless" : 0
+		4:	"Start On" : 0
+		8:	"Start Full" : 0
+		16:	"Don't drop" : 0
+		32: "No glow" : 0
+		128: "Delete when out" : 0
+		256: "Start disabled" : 0
+	]
+
+	ignitionpoint(float) : "Ignition Point" : 32
+	damagescale(float) : "Damage Scale" : "1.0"
+
+
+	// Inputs
+	input Enable(void)				: "Enables input and ignition"
+	input Disable(void)				: "Disables input and ignition"
+	input StartFire(void)			: "Start the fire"
+	input Extinguish(float)			: "Puts out the fire premanently in the number of seconds specified"
+	input ExtinguishTemporary(float): "Puts out the fire temporarily in the number of seconds specified"
+
+	// Outputs
+	output OnIgnited(void)			: "Fires when the fire is first ignited"
+	output OnExtinguished(void)		: "Fires when the fire is fully extinguished"
+]
+
+
+@PointClass base(Angles,Targetname) iconsprite("editor/bullseye.vmt") sphere() = env_npc_tactical_interest : "Env Strike - ."
+[
+	StartActive(choices) : "Start Active" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	radius(float) : "Radius for subject" : 100
+
+	Triggername(target_destination) : "Trigger For player" : "" : "Name of the trigger that uses this env strike."
+	Targetnpc(target_destination) : "Target Name" : "" : "Name of the npc(s)/class that can use this env strike."
+	ActivityPlayed(string) : "Activity Name" : "" : "Name of the activity played by the npc."
+	NbAttackPlayed(integer) : "Number of attack" : 1 : "Number ofg attack played by the npc."
+	TriggernameTest(target_destination) : "Trigger  For npc" : "" : "Name of the trigger that must be tested if don't use radius."
+	TargetToAttack(target_destination) : "Target To Attack" : "" : "Name of the object to attack."
+	Probability(float) : "Probability" : 1 : "Probability from 0 to 1."
+
+	// Inputs
+	input Activate(void)				: "Activate."
+	input Deactivate(void)				: "Deactivate. If npc is currently using it, he stops and normaly attacks."
+	
+	// Outputs
+	output OnReach(void)			: "Fires when npc reach the env_strike."
+]
+
+@PointClass = func_fish_pool : "Creates a school of interactive fish that swim near this entity."
+[
+	model(studio) : "World model" : "models/Junkola.mdl"
+	fish_count(integer) : "Fish Count" : 10 : "Number of Fish in this Pool"
+	max_range(float) : "Max Range" : 150 : "How far away a Fish can wander (max 255)"
+]
+
+
+//-------------------------------------------------------------------------
+// Countdown timer for the teleporter at the end of the game
+//-------------------------------------------------------------------------
+@PointClass base(Targetname) iconsprite("editor/info_target.vmt")  = info_teleporter_countdown : "Countdown timer for the teleporter. The status of the teleporter will appear on vgui_screen entities whose panel is 'teleport_countdown_screen'." 
+[
+	// Inputs
+	input StartCountdown(float) : "Starts the teleporter countdown. Requires an argument which is the number of seconds for the countdown."
+	input StopCountdown(void) : "Stops the countdown permanently"
+	input Disable(void) : "Pauses the countdown due to a temporary malfunction. A warning sign will appear on the linked vgui screens."
+	input Enable(void) : "Restarts the countdown since the malfunction is finished."
+]
+
+@PointClass base(Targetname) = mm_player_inputs : "To send inputs to a player"
+[
+	DisableFadeFromBlack(integer) : "Disable Fade From Black" : 0 : "Disable Fade From Black on map spawn"
+
+	input EnableStealthComputation(integer) : "Enables or Disables the stealth computation for performance reason"
+	input OpenPlayerInventory(void) : "Forces the inventory to display"
+	input OpenPlayerObjectives(void) : "Forces the objectives to display"
+	input GiveSkillPoints(integer) : "Gives Skill Points to the Player"
+	input GiveGold(integer) : "Gives Gold to the Player"
+	input AddPrimaryObjective(string) : "Adds a new Primary Objective to the Player"
+	input AddSecondaryObjective(string) : "Adds a new Secondary Objective to the Player"
+	input RemoveObjective(string) : "Removes an Objective"
+	input ObjectiveDone(string) : "Marks an Objective as Done"
+	input RemoveDoneObjectives(void) : "Removes all done objectives"
+	input GiveItem(target_destination) : "Gives an object to the Player"
+	input EnableInventory(integer) : "Enables or Disables the player access to his inventory"
+	input EnableMagic(integer) : "Enables or Disables the player access to his magic interface"
+	input GiveMaxAdrenaline(void)
+	input UnEquipAll(void)
+	input SwapInventory(void)
+	input Dumpinventory(void)
+	input RemoveWeaponFromInventory(string)
+	input ShowNpcLifeHud(string)
+	input HideNpcLifeHud(void)
+	input ShowDistanceHud(target_destination)
+	input HideDistanceHud(void)
+	input SetDistanceHudValue(float) : "Set the crystal value (0: empty - 1: full)"
+	input EndDemo(string) : "Plays a video file and disconnect to main menu."
+	input BlurFX(integer) : "Do a Full Screen Blur FX (value is ON/OFF switch)."
+	input SwitchXana(integer) : "Switch Xana power (value is ON/OFF switch)"
+	input CinematicBegin(void): "Use this before in game cinematic scene (ie : when the player has no control anymore."
+	input CinematicEnd(void): "Use this after in game cinematic scene (ie : when you're giving back control to player."
+	input RestorePlayer(void): "Use this to give back full mana & health to player"
+
+	input ActiveCinematic(string)
+
+	input GiveXanaPower(void)
+	input RemoveXanaPower(void)
+
+	input PlayerBedIdle(string)
+	input PlayerBedWakeUp(void)
+
+	input PlayerResurrectionIdle(void)
+	input PlayerResurrectionWakeUp(void)
+
+	input ActiveSlowMotion(string)
+
+	// Outputs
+	output OnGameStart(void)			: "Fires when the game starts"
+	output OnDemoStart(void)			: "Fires when the game starts in demo mode"
+
+	output on_equip_sword(void)			
+	output on_equip_armor(void)			
+	output on_equip_daggers(void)			
+	output on_equip_bow(void)			
+
+	output on_equip_spell_flame_arrow(void)			
+	output on_equip_spell_wizardeye(void)			
+	output on_equip_spell_shrink(void)			
+	output on_equip_spell_freeze(void)			
+	output on_equip_spell_telekinesis(void)			
+
+	output on_cast_spell_flame_arrow(void)			
+	output on_cast_spell_wizardeye(void)			
+	output on_cast_spell_shrink(void)			
+	output on_cast_spell_freeze(void)			
+	output on_cast_spell_telekinesis(void)			
+
+	output on_unequip_spell_flame_arrow(void)			
+	output on_unequip_spell_wizardeye(void)			
+	output on_unequip_spell_shrink(void)			
+	output on_unequip_spell_freeze(void)			
+	output on_unequip_spell_telekinesis(void)			
+
+	output on_hit_ragdoll_by_slash(void)			
+	output on_hit_ragdoll_by_big_slash(void)			
+	output OnGrabRagdoll(void)			
+	output OnReleaseRagdoll(void)			
+
+	output On_OpenInventory(void)			
+	output On_OpenInventoryFailed(void)			
+	output On_TakeItemFailed(void)			
+	output On_openbelt(void)			
+	output On_exitbelt(void)			
+	output On_AdrenalineMax(void)			
+	output On_BackStab(void)			
+	
+	output On_ExitBook(void)
+	
+	output OnWarriorSpawn(void)
+	output OnWizardSpawn(void)
+	output OnAssassinSpawn(void)
+
+	output on_hit_ragdoll_by_kick(void)
+	output On_AdrenalineNotMax(void)
+
+	output On_notenoughmana(void)
+	output On_parry(void)
+
+	output on_inventory_use(void)
+	output on_inventory_combine(void)
+
+	output on_lockpick_unlock(void)
+
+	output On_ExitInventory(void)
+	output On_UnequipWeapon(void)
+	
+	output OnNpcTrapImpale(void)
+	output OnNpcGroundImpale(void)
+
+	output OnXanaEnter(void)
+	output OnXanaExit(void)
+	output OnUseAnySpell(void)
+	output OnWizardEyeTimeOut(void)
+
+	output OnNpcHitByPlayerBigSlash(void)
+	output OnNpcHitByPlayerChainedSlash(void)
+	output OnPlayerParryNpcAttack(void)
+	output OnPlayerTakeDmgFromNpcAttack(void)
+	output OnNpcHealPlayer(void)
+
+	output OnPlayerVersus(void)
+	output OnOpenObjectives(void)
+	output OnCloseObjectives(void)
+	output OnBuySkill(void)
+
+	output OnKickFailed(void)
+]
+
+@PointClass base(prop_physics) studioprop() = mm_book :
+	"This class is the same as prop_physics, except it can be used and displays a text."
+[
+	spawnflags(flags) =
+	[
+		32768:	"Pause" : 1
+	]
+
+	booktext(string) : "Book Text" : "" : "Localized text displayed by the book"
+	opensound(choices) : "Open Sound" : "Book_Open" : "Sound to Play when opening this book" =
+	[
+		"Book_Open" : "Book_Open"
+		"Parchment_Open" : "Parchment_Open"
+		"Stone_Open" : "Stone_Open"
+	]
+	closesound(choices) : "Close Sound" : "Book_Close" : "Sound to Play when closing this book" =
+	[
+		"Book_Close" : "Book_Close"
+		"Parchment_Close" : "Parchment_Close"
+		"Stone_Close" : "Stone_Close"
+	]
+
+	input ReadBook(void) : "Displays the book interface"
+	input ReadTutorial(float) : "Displays the tutorial interface"
+	input CloseTutorial(void) : "Close the tutorial interface"
+
+	output on_exit_book(void)
+	output OnPlayerPickup(void)
+]
+
+@PointClass base(Targetname) = mm_player_class_chooser : "an entity to give skills to the player"
+[
+	input ChooseWarrior(void) : "Gives the player warrior skills"
+	input ChooseWizard(void) : "Gives the player wizard skills"
+	input ChooseAssassin(void) : "Gives the player assassin skills"
+]
+
+@PointClass base(Targetname,Parentname) sphere(FlightRadius) sphere(InnerRadius) = mm_flies : "an entity to place a swarm of flies (fr : mouches)"
+[	
+	InnerRadius(float)	:	"Min radius"				: 15	: "Min Dist from entity center"
+	FlightRadius(float)	:	"Max Flight radius "			: 100	: "Flight radius for flies"
+	Population(integer)	:	"Number of Flies to spawn"		: 10	: "Number of Flies to spawn"
+	Scale(float)		:	"Scale of our flies"			: "0.7"	: "Scale to set flies's sizes. Scale = 1 -> Size = 1 x 1 inch"
+	BaseSpeed(float)	:	"Base Speed"				: 60	: "Base speed of the flies"
+	NoDrawDist(float)	:	"No Draw Distance"			: 1000	: "Flies won't be drawn if the player is further than this distance"
+	ChaosFactor(float)	:	"Chaos Factor"				: "1"	: "Range 0 to 1, probability affecting changes of flight goals"		
+	SphereType(choices)	:	"Type of Volume"			: 0 =
+	[
+		0 : "Full sphere"
+		1 :	"Half sphere"
+	]
+	SkinOverride(string)	:	"Flies Texture"				: "effects/fly_spr"	: "Name of skin to override Skin"
+	Sound(string)		:	"Emitted Sound"				: ""			: "Sound played in loop by this entity (for real flies : fly_buzz_loop )"
+]
+
+
+@PointClass base(Targetname) sphere(FlightRadius) sphere(InnerRadius) = mm_butterflies : "an entity to place some butterflies (fr : papillons)"
+[
+	FlightRadius(float)	:	"Max Flight radius "			: 100	: "Flight radius for butterflies"
+	Population(integer)	:	"Number of butterflies to spawn"	: 5		: "Number of butterflies to spawn"
+	Scale(float)		:	"Scale of our butterflies"		: 1		: "Scale to set butterflies's sizes. Scale = 1 -> Size = 1 x 1 inch"
+	InnerRadius(float)	:	"Min radius"				: 15	: "Min Dist from entity center, in half sphere mode, determine the distance under which butterflies want to land."
+	BaseSpeed(float)	:	"Base Speed"				: 20	: "Base speed of the butterflies"
+	NoDrawDist(float)	:	"No Draw Distance"			: 1000	: "Butterflies won't be drawn if the player is further than this distance"
+	SphereType(choices)	:	"Type of Volume"			: 0 =
+	[
+		0 : "Full sphere"
+		1 : "Half sphere"
+	]
+	Skin(choices)		:	"Butterfly skin"			: 0 =
+	[
+		0 : "Blue"
+		1 : "Orange"
+		2 : "Dark"
+		3 : "White"
+		4 : "Override"
+	]
+	SkinOverride(string)	:	"Butterfly override texture"		: ""	: "Name of texture to override Skin"
+	Sound(string)		:	"Emitted Sound"				: ""	: "Sound played in loop by this entity"
+]
+
+
+@SolidClass base(Targetname) = mm_func_leaves : 
+	"A brush entity that spawns falling leaves inside its volume."
+[	
+	Population(integer)	:	"Number of leaves"			: 10	: "Number of leaves to spawn"	
+	BaseSpeed(float)	:	"Base Speed"				: 30	: "Base falling speed of the leaves"
+	BaseFadedTime(float)	:	"Base Fade time"			: 10	: "Base time it takes for a leaf to fade before respawning. This MUST NOT be equal to zero"
+	Scale(float)		:	"Scale of our leaves"		: 3		: "Scale to set leaves's sizes. Scale = 1 -> Size = 3 x 3 inches"
+	State(choices)		:	"Starts Active"				: 1 =
+	[
+		1 :	"Yes"
+		0 : "No"
+	]
+	// Inputs
+	input Start(void)			: "Start leaves's fall"
+	input Stop(void)			: "Stop leaves's fall"
+	input SetBaseSpeed(float)	: "Set the base falling speed"
+	input SetPopulation(integer): "Set number of leaves to spawn"
+]
+
+@SolidClass base(Targetname) = mm_func_fishes : "A brush entity that spawns fishes"
+[
+	Population(integer)	:	"Number of fishes"			: 5	: "Number of fishes to spawn"	
+	Scale(float)		:	"Scale of our fishes"			: "0.5"	: "Scale to set fishes's sizes."	
+	BaseSpeed(float)	:	"Base Speed"				: 35	: "Base speed of the fishes"
+	ProbaModelA(float)	:	"Probability for Model A"		: "0.4"	: "Probability for a fish to have the A model. 	ProbaModelA + ProbaModelB + ProbaModelC must be = 1 !!"
+	ProbaModelB(float)	:	"Probability for Model B"		: "0.3"	: "Probability for a fish to have the B model. 	ProbaModelA + ProbaModelB + ProbaModelC must be = 1 !!"
+	ProbaModelC(float)	:	"Probability for Model C"		: "0.3"	: "Probability for a fish to have the C model. 	ProbaModelA + ProbaModelB + ProbaModelC must be = 1 !!"
+
+]
+
+
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_classic/Bow_classic.mdl") = weapon_arxcrossbow : "Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_ropearrow/Bow_ropearrow.mdl") = weapon_arxcrossbowrope : "Bow with rope arrows"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_explosive/Bow_explosive.mdl") = weapon_mm_bow_explosive : "Explosive Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_freeze/Bow_freeze.mdl") = weapon_mm_bow_freeze : "Freeze Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_living/Bow_living.mdl") = weapon_mm_bow_living : "Living Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_long/Bow_long.mdl") = weapon_mm_bow_long : "Long Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_mass/Bow_mass.mdl") = weapon_mm_bow_mass : "Mass Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_holy/Bow_holy.mdl") = weapon_mm_bow_holy : "Holy Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_plan/Bow_plan.mdl") = weapon_mm_bow_plan : "Plan Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_poison/Bow_poison.mdl") = weapon_mm_bow_poison : "Poison Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_sniper/Bow_sniper.mdl") = weapon_mm_bow_sniper : "Sniper Bow" 
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/Items/Armors/Helmets/Helmet_Orc_small.mdl") = weapon_arxhelmet : "Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_wakizashi/sword_wakizashi.mdl") = weapon_arxkatana : "Sword Wakizashi"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_Orc/Sword_Orc.mdl") = weapon_arxorccleaver : "Sword Orc"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_short/Sword_short.mdl") = weapon_arxsword : "Sword short"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_short/sword_short.mdl") = weapon_arx_short_sword : "Short Sword"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_long/sword_long.mdl") = weapon_arx_long_sword : "Long Sword"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_Orc_Chief/Sword_Orc_Chief.mdl") = weapon_arx_orc_chief_cleaver : "Orc Chief Cleaver"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_Silver/Sword_Silver.mdl") = weapon_arx_silver_sword : "Holy Sword"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_of_fire/sword_of_fire.mdl") = weapon_arx_sword_of_fire : "Sword of Fire"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_misery/sword_misery.mdl") = weapon_arx_sword_of_misery : "Sword of Misery"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_wakizashi_ex/Sword_wakizashi_ex.mdl") = weapon_arx_wakizashi_of_excellence : "Wakizashi of Excellence"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Sword_souldrinker/Sword_souldrinker.mdl") = weapon_sword_souldrinker : "Sword Souldrinker"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/Items/Armors/Shield_Orc/Shield_Orc.mdl") = weapon_arxshield : "Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/club/club.mdl") = weapon_arxclub : "Club"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers/Daggers.mdl") = weapon_arxdaggers : "Daggers"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_ash/Daggers_ash.mdl") = weapon_mm_daggers_of_ashes : "Daggers of Ashes"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_dest/Daggers_dest.mdl") = weapon_mm_daggers_dest : "Daggers of Destruction"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_kryss/Daggers_kryss.mdl") = weapon_mm_daggers_kryss : "Poisonned Kryss"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_kryss_lk/Daggers_kryss_lk.mdl") = weapon_mm_daggers_kryss_lk : "Kryss of Lucky Hit"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_light/Daggers_light.mdl") = weapon_mm_daggers_light : "Lightning Dagger"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_plan/Daggers_plan.mdl") = weapon_mm_daggers_plan : "Plan Dagger"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_polar/Daggers_polar.mdl") = weapon_mm_daggers_polar : "Polar Blade"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_shadow/daggers_shadow.mdl") = weapon_mm_daggers_shadow : "Shadow Steel Dagger"
+[
+]
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Daggers_silver/daggers_silver.mdl") = weapon_mm_daggers_silver : "Combat Dagger"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_Necromancer/Staff_Necromancer.mdl") = weapon_mm_staff_necromancer : "Necromancer Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_Wizard/Staff_Wizard.mdl") = weapon_mm_staff_wizard : "Wizard Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_shadow/Staff_shadow.mdl") = weapon_mm_staff_shadow : "Shadow Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable, Studiomodel) = weapon_mm_weapon_generic : "Weapon generic"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/Ring_regeneration/Ring_regeneration.mdl") = weapon_arxringregeneration : "Regeneration Ring"
+[
+]
+
+// Collector weapons BEGIN
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/sword_collector/sword_collector.mdl") = weapon_arx_sword_collector : "Collector Sword"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/daggers_collector/daggers_collector.mdl") = weapon_mm_daggers_collector : "Collector Daggers"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Bow_collector/Bow_collector.mdl") = weapon_mm_bow_collector : "Collector Bow"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_collector/Staff_collector.mdl") = weapon_mm_staff_collector : "Collector Staff"
+[
+]
+// Collector weapons END
+
+@PointClass base(prop_physics) studio("models/items/magic/Ring_basic/Ring_copper.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_ring_copper : "A copper ring"
+[
+]
+
+@PointClass base(prop_physics) studio() sphere(fademindist) sphere(fademaxdist) = item_loot_ring_silver : "A silver ring"
+[
+    model(studio) : "World model" : "models/items/magic/Ring_basic/Ring_silver.mdl"
+]
+
+@PointClass base(prop_physics) studio() sphere(fademindist) sphere(fademaxdist) = item_loot_ring_gold : "A gold ring"
+[
+    model(studio) : "World model" : "models/items/magic/Ring_basic/Ring_gold.mdl"
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Hook/Hook.mdl") = weapon_mm_hook : "Hook"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/specter_knife/specter_knife.mdl") = weapon_mm_specter_knife : "Hook"
+[
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_air_1/scroll_air_1.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_telekynesis : "A telekynesis scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_air_2/scroll_air_2.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_cure : "A Cure wounds scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_air_3/scroll_air_3.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_lightning : "A Lightning bolt scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_air_4/scroll_air_4.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_shrink : "A Shrink scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_earth_2/scroll_earth_2.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_magic_reflection : "A Magic reflection scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_fire_1/scroll_fire_1.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_flame_arrow : "A Flame Arrow scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_fire_2/scroll_fire_2.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_fire_trap : "A Fire trap scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_fire_3/scroll_fire_3.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_fireball : "A Fireball scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_fire_4/scroll_fire_4.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_inferno : "A Inferno scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_water_1/scroll_water_1.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_wizard_eye : "A Wizard eye scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_water_3/scroll_water_3.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_freeze : "A Freeze scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/magic/scroll_water_4/scroll_water_4.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_scroll_charm : "A Charm scroll"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/gold_bar/gold_bar.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_bar_gold : "A gold bar"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/gold_bar/silver_bar.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_bar_silver : "A silver bar"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/bracegold.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_brace_gold : "A gold bracelet"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/bracegold.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_brace_gold : "A gold bracelet"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/bracesilver.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_brace_silver : "A silver bracelet"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/gobletgold.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_goblet_gold : "A gold goblet"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/Jewel01c.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_sapphire_big : "A big sapphire"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/Jewel03c.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_ruby_big : "A big ruby"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/necklace01a.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_necklace_onyx : "An onyx necklace"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/necklace01b.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_necklace_amethyst : "An amethyst necklace"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/necklace02a.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_necklace_emerald : "An emerald necklace"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/jewels/necklace02b.mdl") sphere(fademindist) sphere(fademaxdist) = item_loot_necklace_sapphire : "A sapphire necklace"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bananas/banana01.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_banana01 : "A banana"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bananas/banana02.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_banana02 : "A banana"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bananas/banana03.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_banana03 : "A banana"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bananas/banana04.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_banana04 : "A banana"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bananas/banana_regime.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_banana_regime : "A banana regime"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bread01/bread01_raw.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_bread01_row : "A row bread"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/bread01/bread01_cooked.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_bread01_cooked : "A cooked bread"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/chicken/roasted_chicken.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_chicken_roasted : "A roasted chicken"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/fish/fish01.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fish01 : "A fish"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/fish/fish02.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fish02 : "A fish"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/fish/fish03.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fish03 : "A fish"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/fish/hanged_fishes.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fish_hanged : "Hanged fishes"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/food_ratio/food_ratio02.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_food_ratio02 : "A food ratio"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/fruits/red_apple.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_red_apple : "A red apple"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/garlic/garlic.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_garlic : "Some garlic"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/ham_dry/ham_dry.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_ham : "A dry ham"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/leeks/leek01.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_leek01 : "A leek"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/magic_toad/magic_toad.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_magic_toad : "A magic toad"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/mushroom/mushroom.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_mushroom : "A mushroom"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/magic_toad/magic_toad.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_magic_toad : "A magic toad"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/mushroom/mushroom_verymedium.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_mushroom_verymedium : "A mushroom"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/pie/pie.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_pie : "A pie"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/ribs/ribs.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fibs_row : "Some row ribs"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/ribs/ribs_cooked.mdl") sphere(fademindist) sphere(fademaxdist) = item_food_fibs_cooked : "Some cooked ribs"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/potions/cure_poison_potion.mdl") sphere(fademindist) sphere(fademaxdist) = item_potion_cure_poison : "A cure poison potion"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/potions/full_life_potion.mdl") sphere(fademindist) sphere(fademaxdist) = item_potion_full_life : "A full life potion"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/potions/Life_potion.mdl") sphere(fademindist) sphere(fademaxdist) = item_potion_life : "A life potion"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/potions/Mana_potion.mdl") sphere(fademindist) sphere(fademaxdist) = item_potion_mana : "A mana potion"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/items/provisions/potions/stone_potion.mdl") sphere(fademindist) sphere(fademaxdist) = item_potion_stone : "A stone skin potion"
+[
+
+]
+
+@PointClass base(prop_physics) studio("models/props/furnitures/humans/bottel/bottel_03.mdl") sphere(fademindist) sphere(fademaxdist) = item_bottle_wine03 : "A bottle of wine"
+[
+
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/staff_combat/staff_combat.mdl") = weapon_mm_staff_combat : "Combat Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/staff_ghost/staff_ghost.mdl") = weapon_mm_staff_ghost : "Ghost Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_Fire/Staff_Fire.mdl") = weapon_mm_staff_fire : "Fire Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_holy/Staff_Holy.mdl") = weapon_mm_staff_Holy : "Holy Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_mana/Staff_Mana.mdl") = weapon_mm_staff_Mana : "Mana Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_shock/Staff_Shock.mdl") = weapon_mm_staff_shock : "Shock Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_spell/Staff_Spell.mdl") = weapon_mm_staff_spell : "Spell Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_stun/Staff_Stun.mdl") = weapon_mm_staff_stun : "Stun Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_wood/Staff_wood.mdl") = weapon_mm_staff_wood : "Wood Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/weapons/Staff_shadow/Staff_shadow.mdl") = weapon_mm_staff_shadow : "Shadow Steel Staff"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/ring_dexterity/ring_dexterity.mdl") = weapon_arxringdexterity : "Ring of Dexterity"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/ring_mana/ring_mana.mdl") = weapon_arxringmana : "Ring of Mana"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/ring_protectfire/ring_protectfire.mdl") = weapon_arxringprotectfire : "Ring of Fire Protection"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/ring_secondchance/ring_secondchance.mdl") = weapon_arxringsecondchance : "Ring of Second Chance"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/magic/ring_strength/ring_strength.mdl") = weapon_arxringstrength : "Ring of Strength"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_gob/shield_gob.mdl") = weapon_mm_shield_gob : "Goblin Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_deathknight/shield_deathknight.mdl") = weapon_mm_shield_deathknight : "Deathknight Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_necroguard/shield_necroguard.mdl") = weapon_mm_shield_necroguard : "Necroguard Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_guard/shield_guard.mdl") = weapon_mm_shield_guard : "Guard Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_orc/shield_orc.mdl") = weapon_mm_shield_orc : "Orc Big Wooden Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_orc/shield_orc_small.mdl") = weapon_mm_shield_orcsmall : "Orc Small Round Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_lava/shield_lava.mdl") = weapon_mm_shield_lava : "Lava Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/shield_magic/shield_magic.mdl") = weapon_mm_shield_magic : "Lightning Shield"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/helmet_guard.mdl") = weapon_mm_helmet_guard : "Guard Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/helmet_confusion.mdl") = weapon_mm_helmet_confusion : "Confusion Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/helmet_accuracy.mdl") = weapon_mm_helmet_accuracy : "Accuracy Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/helmet_health.mdl") = weapon_mm_helmet_health : "Health Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/helmet_orc_small.mdl") = weapon_mm_helmet_orcsmall : "Orc Small Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/orc_chief_helmet.mdl") = weapon_mm_helmet_orcchief : "Orc Chief Helmet"
+[
+]
+
+@PointClass base(mm_Weapon_Takable) studio("models/items/armors/Helmets/lich_crown/lich_crown.mdl") = weapon_mm_helmet_lichcrown : "Lich Crown"
+[
+]
+
+@PointClass base(BaseDriveableVehicle, Parentname) studioprop() = prop_vehicle_choreo_generic :
+	"Generic Choreo vehicle used for magical events."
+[
+	model(studio) : "World model" : "models/vehicles/prisoner_pod.mdl"
+	vehiclescript(string) : "Vehicle Script File" : "scripts/vehicles/choreo_vehicle.txt"
+	
+	input Open(void) : "Plays the vehicle's open animation and unlocks the vehicle for entry or exit."
+	input Close(void) : "Plays the vehicle's close animation and locks the vehicle for entry or exit."
+	input EnterVehicle(void) : "Forces the activator (or player) into the vehicle."
+	input EnterVehicleImmediate(void) : "Forces the activator (or player) into the vehicle without enter/exit animations."
+	input ExitVehicle(void) : "Boots the prisoner out of the vehicle."
+	
+	output OnOpen(void) : "Fired when the vehicle is open enough to enter."
+	output OnClose(void) : "Fired when the vehicle too closed to enter."
+]
+
+@PointClass base(Targetname) = env_entity_dissolver: "Entity Dissolver"
+[
+	input Dissolve(string) : "Dissolve target, if no target is passed it'll use the target specified in the target field."
+	target(target_destination) : "Target to Dissolve" : "" : "Targetname of the entity you want to dissolve."
+]
